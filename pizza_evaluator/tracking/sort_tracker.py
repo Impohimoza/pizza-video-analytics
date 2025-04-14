@@ -12,6 +12,7 @@ class SortTrackerManager:
         self.sort_tracker = Sort(max_age=max_age,
                                  min_hits=min_hits,
                                  iou_threshold=iou_threshold)
+        self.tracked_ids = {}
         self.ready_ids = {}
         self.control_x = control_x  # вертикальная линия контроля
 
@@ -30,7 +31,9 @@ class SortTrackerManager:
             if track_id not in self.ready_ids and center_x <= self.control_x:
                 self.ready_ids[track_id] = frame_time
 
-            # Проверка условий
+            if track_id not in self.tracked_ids:
+                self.tracked_ids[track_id] = None
+
             if (
                 track_id in self.ready_ids
                 and (frame_time - self.ready_ids[track_id] > 1.0)
