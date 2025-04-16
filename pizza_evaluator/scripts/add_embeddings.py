@@ -21,6 +21,8 @@ MODEL_PATH = os.getenv("MODEL_PATH", "model/pizza_embedder_tf")
 DATASET_DIR = os.getenv("DATASET_DIR", "dataset")
 EMBEDDING_DIM = 256
 
+PIZZA_ID = {'0': 1, '1': 2, '2': 3, '3': 4, '4': 5}
+
 # -------------------------
 # 2. Функции
 # -------------------------
@@ -51,11 +53,9 @@ def get_embedding(image_path, model):
 def insert_embedding(conn, class_name, image_name, vector):
     with conn.cursor() as cursor:
         cursor.execute("""
-            INSERT INTO pizza_embeddings (class_name, image_name, vector)
+            INSERT INTO pizza_embeddings (pizza_id, image_name, vector)
             VALUES (%s, %s, %s)
-            ON CONFLICT (class_name, image_name)
-            DO UPDATE SET vector = EXCLUDED.vector
-        """, (class_name, image_name, vector.tolist()))
+        """, (PIZZA_ID[class_name], image_name, vector.tolist()))
     conn.commit()
     print(f"[DB] Загружено: {class_name} — {image_name}")
 
