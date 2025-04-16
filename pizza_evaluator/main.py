@@ -1,5 +1,29 @@
+import os
+from dotenv import load_dotenv
+
 from streaming.video_stream_processor import VideoStreamProcessor
+from db.postgres import pg
 
 if __name__ == "__main__":
-    stream = VideoStreamProcessor(src=0, interval=3)
-    stream.run()
+    try:
+        # Загружаем .env
+        load_dotenv()
+
+        # Получаем параметры из окружения
+        db_config = {
+            "dbname": os.getenv("DB_NAME"),
+            "user": os.getenv("DB_USER"),
+            "password": os.getenv("DB_PASSWORD"),
+            "host": os.getenv("DB_HOST", "localhost"),
+            "port": int(os.getenv("DB_PORT", 5432))
+        }
+
+        pg.connect(**db_config)
+
+        stream = VideoStreamProcessor(src=0)
+        stream.run()
+
+    except KeyboardInterrupt:
+        print("[MAIN] Завершение по Ctrl+C")
+    finally:
+        pg.close()
