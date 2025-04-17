@@ -7,7 +7,12 @@ class PostgresConnection:
         self.conn = None
         self.cursor = None
 
-    def connect(self, dbname, user, password, host, port):
+    def connect(self,
+                dbname: str,
+                user: str,
+                password: str,
+                host: str,
+                port: str):
         print("[DB] Подключение к PostgreSQL...")
         self.conn = psycopg2.connect(
             dbname=dbname,

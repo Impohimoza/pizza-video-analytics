@@ -1,9 +1,10 @@
 import os
+
 import cv2
 import numpy as np
+from dotenv import load_dotenv
 import psycopg2
 from tensorflow.keras.models import load_model
-from dotenv import load_dotenv
 
 # -------------------------
 # 1. Конфигурация

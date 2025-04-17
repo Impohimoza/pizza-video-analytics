@@ -16,7 +16,7 @@ class SortTrackerManager:
         self.ready_ids = {}
         self.control_x = control_x  # вертикальная линия контроля
 
-    def update(self, detections, frame_time):
+    def update(self, detections: np.ndarray, frame_time: float) -> np.ndarray:
         if len(detections) == 0:
             return np.empty((0, 5))
 

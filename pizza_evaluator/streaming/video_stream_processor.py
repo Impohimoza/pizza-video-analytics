@@ -1,11 +1,12 @@
-import cv2
-from time import time
-import numpy as np
 import os
+from time import time
+
+import cv2
+import numpy as np
 
 from core.detectors.pizza_detector import PizzaDetector
-from tracking.sort_tracker import SortTrackerManager
 from core.crop_processor import CropProcessor
+from tracking.sort_tracker import SortTrackerManager
 
 
 class VideoStreamProcessor:
@@ -76,8 +77,9 @@ class VideoStreamProcessor:
                 if self.tracker.tracked_ids[id_] is None:
                     x1, y1, x2, y2 = box
                     crop = frame[y1:y2, x1:x2]
-                    class_name = self.processor.process_crop(crop)
-                    self.tracker.tracked_ids[id_] = class_name
+                    if crop is not None and crop.size != 0:
+                        class_name = self.processor.process_crop(crop)
+                        self.tracker.tracked_ids[id_] = class_name
                 class_names.append(self.tracker.tracked_ids[id_])
 
             frame = self.draw_bounding_boxes_with_id(frame,
