@@ -5,10 +5,13 @@ from ..segmentation.crust_segmentation import CrustSegmentation
 
 
 class CrustChecker:
+    """Класс для получения процента корки на пицце"""
     def __init__(self, model: CrustSegmentation):
         self.seg_model = model
 
     def get_percentage_crust(self, image: np.ndarray) -> float:
+        """Функция для расчета процента корки
+        на пицце по маскам корки и начинки"""
         masks = self.seg_model.detect(image)
 
         if masks is None:
