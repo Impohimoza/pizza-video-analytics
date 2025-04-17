@@ -1,6 +1,7 @@
 import cv2
 from time import time
 import numpy as np
+import os
 
 from core.detectors.pizza_detector import PizzaDetector
 from tracking.sort_tracker import SortTrackerManager
@@ -11,12 +12,13 @@ class VideoStreamProcessor:
     def __init__(self, src=0, control_line_x=400):
         self.cap = cv2.VideoCapture(src)
         self.tracker = SortTrackerManager(control_x=control_line_x)
-        self.detector = PizzaDetector()
+        self.detector = PizzaDetector(model_path=os.getenv("PIZZA_DETECTOR"))
         self.processor = CropProcessor()
         self.last_eval_time = 0
         self.control_line_x = control_line_x
 
     def draw_bounding_boxes_with_id(self, img, bboxes, ids, class_names):
+        """Функция для отрисовки bounding boxes на видео потоке"""
         for bbox, id_, name in zip(bboxes, ids, class_names):
             cv2.rectangle(img,
                           (int(bbox[0]), int(bbox[1])),
@@ -33,6 +35,7 @@ class VideoStreamProcessor:
         return img
 
     def draw_fps_line(self, img, fps):
+        """Функция для отрисовки счетчика fps и линии детекции"""
         cv2.putText(
             img,
             f'FPS: {int(fps)}',
@@ -52,6 +55,7 @@ class VideoStreamProcessor:
         return img
 
     def run(self):
+        """Функция для запуска потока и детекции с оценкой """
         print("[INFO] Запуск видеопотока...")
         fps_count = []
         fps = 0
@@ -60,12 +64,14 @@ class VideoStreamProcessor:
             ret, frame = self.cap.read()
             if not ret:
                 break
+            # Детекция пиццы на кадре
             detections_list = self.detector.detect(frame)
             res = self.tracker.update(detections_list, start_time)
             boxes_track = res[:, :-1]
             boxes_ids = res[:, -1].astype(int)
 
             class_names = []
+            # Единоразовая классификация и оценка пиццы
             for box, id_ in zip(boxes_track, boxes_ids):
                 if self.tracker.tracked_ids[id_] is None:
                     x1, y1, x2, y2 = box

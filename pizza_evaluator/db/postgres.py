@@ -2,6 +2,7 @@ import psycopg2
 
 
 class PostgresConnection:
+    """Класс для работы с БД"""
     def __init__(self):
         self.conn = None
         self.cursor = None

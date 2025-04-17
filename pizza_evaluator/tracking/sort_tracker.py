@@ -6,9 +6,9 @@ from .sort import Sort
 class SortTrackerManager:
     def __init__(self,
                  control_x=400,
-                 max_age=15,
+                 max_age=10,
                  min_hits=3,
-                 iou_threshold=0.3):
+                 iou_threshold=0.5):
         self.sort_tracker = Sort(max_age=max_age,
                                  min_hits=min_hits,
                                  iou_threshold=iou_threshold)

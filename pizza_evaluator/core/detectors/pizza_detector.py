@@ -3,6 +3,7 @@ import numpy as np
 
 
 class PizzaDetector:
+    """Класс для детектирования пиццы"""
     def __init__(self,
                  model_path='pizza_evaluator/models/yolov8m.pt',
                  conf_thresh=0.5):
@@ -10,6 +11,7 @@ class PizzaDetector:
         self.conf_thresh = conf_thresh
 
     def get_results(self, results):
+        """Функция для обработки результата модели детекции"""
         detection_list = []
         for result in results[0]:
             confidence = result.boxes.conf.cpu().numpy()
