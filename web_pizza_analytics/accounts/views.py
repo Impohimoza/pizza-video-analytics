@@ -1,3 +1,11 @@
-from django.shortcuts import render
+from django.contrib.auth.views import LoginView
+from django.shortcuts import redirect
 
-# Create your views here.
+
+class CustomLoginView(LoginView):
+    template_name = 'accounts/login.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
