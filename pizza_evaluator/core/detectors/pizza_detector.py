@@ -1,5 +1,5 @@
-from ultralytics import YOLO
 import numpy as np
+from ultralytics import YOLO
 
 
 class PizzaDetector:
@@ -10,7 +10,7 @@ class PizzaDetector:
         self.model = YOLO(model_path)
         self.conf_thresh = conf_thresh
 
-    def get_results(self, results):
+    def get_results(self, results: list) -> np.ndarray:
         """Функция для обработки результата модели детекции"""
         detection_list = []
         for result in results[0]:
@@ -26,7 +26,7 @@ class PizzaDetector:
                 detection_list.append(merged_detection)
         return np.array(detection_list)
 
-    def detect(self, frame: np.ndarray):
+    def detect(self, frame: np.ndarray) -> np.ndarray:
         """
         Детектирует пиццу на кадре
         """

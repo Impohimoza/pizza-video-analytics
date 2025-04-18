@@ -1,8 +1,9 @@
 import os
+
 from dotenv import load_dotenv
 
-from streaming.video_stream_processor import VideoStreamProcessor
 from db.postgres import pg
+from streaming.video_stream_processor import VideoStreamProcessor
 
 if __name__ == "__main__":
     try:
