@@ -11,7 +11,6 @@ class FeatureExtractor:
         self.model = tf.keras.models.load_model(model_path)
 
     def extract(self, image_path):
-        print(image_path)
         img = cv2.imread(image_path)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         img = cv2.resize(img, (480, 480))
