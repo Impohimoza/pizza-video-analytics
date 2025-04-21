@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Добавить пиццу{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <div class="card shadow p-4">
+        <h2 class="mb-4">{{ pizza.name }}</h2>
+        <p><strong>Процент корки:</strong> {{ pizza.crust_percentage }}%</p>
+
+        <h4 class="mt-5">Ингредиенты:</h4>
+        {% if compositions %}
+            <ul class="list-group">
+                {% for comp in compositions %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ comp.ingredient.name }}
+                        <span class="badge bg-primary rounded-pill">{{ comp.quantity }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Ингредиенты отсутствуют.</p>
+        {% endif %}
+
+        <h4 class="mt-5">Фотографии пиццы:</h4>
+        <div class="row">
+            {% for img in images %}
+                <div class="col-md-4 mb-3">
+                    <img src="{{ img.image.url }}" class="img-fluid rounded">
+                </div>
+            {% empty %}
+                <p>Фотографии отсутствуют.</p>
+            {% endfor %}
+        </div>
+
+        <div class="mt-4">
+            <a href="{% url 'pizza_list' %}" class="btn btn-secondary">Назад к списку</a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
