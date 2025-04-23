@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load query_transform %}
+{% block title %}Список оценок пицц{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center mb-4">Список оценок пицц</h2>
+
+    <!-- Форма фильтров -->
+    <form method="get" class="card p-4 shadow-sm mb-5">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="pizza" class="form-label">Тип пиццы:</label>
+                <select id="pizza" name="pizza" class="form-select">
+                    <option value="">Все пиццы</option>
+                    {% for pizza in pizzas %}
+                        <option value="{{ pizza.id }}" {% if request.GET.pizza == pizza.id|stringformat:"s" %}selected{% endif %}>
+                            {{ pizza.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label for="location" class="form-label">Адрес пиццерии:</label>
+                <select id="location" name="location" class="form-select">
+                    <option value="">Все адреса</option>
+                    {% for location in locations %}
+                        <option value="{{ location.id }}" {% if request.GET.location == location.id|stringformat:"s" %}selected{% endif %}>
+                            {{ location.address }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="start_date" class="form-label">Дата от:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}" class="form-control">
+            </div>
+
+            <div class="col-md-2">
+                <label for="end_date" class="form-label">Дата до:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label for="quality" class="form-label">Макс. качество (%):</label>
+                <input type="number" id="quality" name="quality" class="form-control" value="{{ request.GET.quality }}" min="0" max="100" step="0.1">
+            </div>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary">Применить фильтры</button>
+            <a href="{% url 'evaluation_export' %}?{% query_transform request.GET %}" class="btn btn-success ms-2">Выгрузить в Excel</a>
+            <a href="{% url 'evaluation_list' %}" class="btn btn-secondary ms-2">Сбросить</a>
+        </div>
+    </form>
+
+    <!-- Таблица оценок -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Пицца</th>
+                        <th>Адрес</th>
+                        <th>Дата оценки</th>
+                        <th>Качество (%)</th>
+                        <th>Процент корки (%)</th>
+                        <th>Подробнее</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for evaluation in evaluations %}
+                        <tr>
+                            <td>{{ evaluation.pizza.name }}</td>
+                            <td>{{ evaluation.location.address }}</td>
+                            <td>{{ evaluation.date|date:"d.m.Y H:i" }}</td>
+                            <td>{{ evaluation.quality_percentage|floatformat:1 }}%</td>
+                            <td>{{ evaluation.crust_percentage|floatformat:1 }}%</td>
+                            <td>
+                                <a href="{% url 'evaluation_detail' evaluation.id %}" class="btn btn-sm btn-outline-primary">Открыть</a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">Оценки не найдены по выбранным фильтрам.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
