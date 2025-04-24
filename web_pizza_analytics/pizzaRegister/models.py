@@ -36,6 +36,9 @@ class PizzaEmbeddings(models.Model):
     def __str__(self):
         return f"Embedding for {self.pizza.name if self.pizza else 'Unknown'}"
 
+    class Meta:
+        db_table = 'pizza_embeddings'
+
 
 class Pizzas(models.Model):
     name = models.TextField(unique=True)

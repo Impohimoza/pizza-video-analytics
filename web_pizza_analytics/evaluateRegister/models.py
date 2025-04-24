@@ -13,7 +13,7 @@ class PizzeriaLocation(models.Model):
 
 
 class Evaluation(models.Model):
-    pizza = models.ForeignKey(Pizzas, on_delete=models.CASCADE)
+    pizza = models.ForeignKey(Pizzas, on_delete=models.SET_NULL, null=True)
     location = models.ForeignKey(PizzeriaLocation, on_delete=models.CASCADE)
     photo = models.ImageField(upload_to='evaluation_photos/')
     date = models.DateTimeField(auto_now_add=True)

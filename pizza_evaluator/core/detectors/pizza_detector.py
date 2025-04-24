@@ -5,7 +5,7 @@ from ultralytics import YOLO
 class PizzaDetector:
     """Класс для детектирования пиццы"""
     def __init__(self,
-                 model_path='pizza_evaluator/models/yolov8m.pt',
+                 model_path='.models/yolov8m.pt',
                  conf_thresh=0.5):
         self.model = YOLO(model_path)
         self.conf_thresh = conf_thresh

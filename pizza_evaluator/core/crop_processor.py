@@ -7,6 +7,7 @@ from .embedder.embedder import PizzaEmbedder
 from .logic.ingredient_checker import IngredientChecker
 from .logic.crust_checker import CrustChecker
 from .segmentation.crust_segmentation import CrustSegmentation
+from .api.evaluation_to_server import send_evaluation_to_server
 
 
 class CropProcessor:
@@ -28,8 +29,8 @@ class CropProcessor:
             crop,
             pizza_id=pizza_id
             )
-        for ingr in ingredient_count:
-            print(f'{ingr}:   {ingredient_count[ingr]}')
+        print(ingredient_count)
         percent_crust = self.crust_checker.get_percentage_crust(crop)
         print(f"Процент корки: {percent_crust}")
+        send_evaluation_to_server(pizza_id, percent_crust, ingredient_count, crop)
         return pizza_id

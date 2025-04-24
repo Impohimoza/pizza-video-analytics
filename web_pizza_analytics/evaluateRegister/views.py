@@ -15,13 +15,15 @@ from datetime import datetime
 @login_required(login_url='/login/')
 def evaluation_list(request):
     evaluations = Evaluation.objects.all()
+    pizzas = Pizzas.objects.all()
+    locations = PizzeriaLocation.objects.all()
 
-    # Получение параметров фильтрации из запроса
+    # Фильтры
     pizza_id = request.GET.get('pizza')
     location_id = request.GET.get('location')
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
-    quality = request.GET.get('quality')  # <-- новый параметр
+    quality = request.GET.get('quality')
 
     if pizza_id:
         evaluations = evaluations.filter(pizza_id=pizza_id)
@@ -45,14 +47,25 @@ def evaluation_list(request):
         except ValueError:
             pass
 
-    pizzas = Pizzas.objects.all()
-    locations = PizzeriaLocation.objects.all()
+    # Сортировка
+    sort_by = request.GET.get("sort_by", "date")
+    order = request.GET.get("order", "desc")
+    direction = "" if order == "asc" else "-"
+    if sort_by in ["date", "quality_percentage"]:
+        evaluations = evaluations.order_by(f"{direction}{sort_by}")
 
-    return render(request, 'evaluateRegister/evaluation_list.html', {
-        'evaluations': evaluations,
-        'pizzas': pizzas,
-        'locations': locations,
-    })
+    context = {
+        "evaluations": evaluations,
+        "pizzas": pizzas,
+        "locations": locations,
+        "sort_by": sort_by,
+        "order": order,
+    }
+
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        return render(request, "evaluateRegister/evaluation_table_body.html", context)
+
+    return render(request, "evaluateRegister/evaluation_list.html", context)
 
 
 # Подробная страница одной оценки

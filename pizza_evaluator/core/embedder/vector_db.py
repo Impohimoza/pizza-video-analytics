@@ -3,7 +3,7 @@ from collections import Counter
 from db.postgres import pg
 
 
-def find_closest_class(vector, top_k=3) -> str:
+def find_closest_class(vector, top_k=5) -> str:
     """Функция для получения класса пиццы путем knn"""
     cursor = pg.get_cursor()
     if cursor is None:
