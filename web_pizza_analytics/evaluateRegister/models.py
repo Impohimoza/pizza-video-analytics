@@ -6,6 +6,7 @@ import uuid
 class PizzeriaLocation(models.Model):
     address = models.CharField(max_length=255)
     token = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    stream_url = models.TextField(blank=True, null=True) 
 
     def __str__(self):
         return self.address

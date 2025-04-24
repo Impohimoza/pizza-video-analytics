@@ -3,9 +3,10 @@ from pizzaRegister.models import Pizzas, Ingredients, PizzaComposition
 from .models import Evaluation, PizzeriaLocation, IngredientEvaluation
 from django.contrib.auth.decorators import login_required
 import openpyxl
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import uuid
+import cv2
 import json
 from datetime import datetime
 
@@ -230,3 +231,33 @@ def create_evaluation_api(request):
     evaluation.save()
 
     return JsonResponse({"success": True, "evaluation_id": evaluation.id, "quality": final_quality})
+
+
+def gen_frames(stream_url):
+    cap = cv2.VideoCapture(stream_url)
+    while True:
+        success, frame = cap.read()
+        if not success:
+            break
+        _, buffer = cv2.imencode('.jpg', frame)
+        frame = buffer.tobytes()
+        yield (b'--frame\r\n'
+               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+
+@login_required(login_url='/login/')
+def stream_camera(request, location_id):
+    try:
+        location = PizzeriaLocation.objects.get(id=location_id)
+        if not location.stream_url:
+            return JsonResponse({"error": "У этой пиццерии не указана ссылка на камеру."}, status=400)
+        return StreamingHttpResponse(gen_frames(location.stream_url),
+                                     content_type='multipart/x-mixed-replace; boundary=frame')
+    except PizzeriaLocation.DoesNotExist:
+        return JsonResponse({"error": "Пиццерия не найдена"}, status=404)
+
+
+@login_required(login_url='/login/')
+def camera_page(request):
+    locations = PizzeriaLocation.objects.exclude(stream_url__isnull=True).exclude(stream_url='')
+    return render(request, 'evaluateRegister/camera_page.html', {'locations': locations})
