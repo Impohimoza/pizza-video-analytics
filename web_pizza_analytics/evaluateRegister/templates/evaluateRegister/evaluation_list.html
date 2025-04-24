@@ -56,40 +56,54 @@
     </form>
 
     <!-- Таблица оценок -->
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover table-bordered align-middle text-center">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Пицца</th>
-                        <th>Адрес</th>
-                        <th>Дата оценки</th>
-                        <th>Качество (%)</th>
-                        <th>Процент корки (%)</th>
-                        <th>Подробнее</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for evaluation in evaluations %}
-                        <tr>
-                            <td>{{ evaluation.pizza.name }}</td>
-                            <td>{{ evaluation.location.address }}</td>
-                            <td>{{ evaluation.date|date:"d.m.Y H:i" }}</td>
-                            <td>{{ evaluation.quality_percentage|floatformat:1 }}%</td>
-                            <td>{{ evaluation.crust_percentage|floatformat:1 }}%</td>
-                            <td>
-                                <a href="{% url 'evaluation_detail' evaluation.id %}" class="btn btn-sm btn-outline-primary">Открыть</a>
-                            </td>
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="7" class="text-center">Оценки не найдены по выбранным фильтрам.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div id="evaluation-table">
+        {% include 'evaluateRegister/evaluation_table_body.html' %}
     </div>
 
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tableContainer = document.getElementById('evaluation-table');
+        let currentOrder = '{{ order }}';
+        let currentSort = '{{ sort_by }}';
+    
+        function loadTable(params = null) {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (params) {
+                for (let [k, v] of Object.entries(params)) {
+                    urlParams.set(k, v);
+                }
+            }
+            fetch(`?${urlParams.toString()}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(res => res.text())
+            .then(html => {
+                tableContainer.innerHTML = html;
+            });
+        }
+    
+        // Сортировка по заголовкам
+        document.addEventListener('click', function (e) {
+            if (e.target.matches('.sort-link')) {
+                e.preventDefault();
+                const sortBy = e.target.dataset.sort;
+                let newOrder = 'asc';
+                if (currentSort === sortBy && currentOrder === 'asc') {
+                    newOrder = 'desc';
+                }
+                currentSort = sortBy;
+                currentOrder = newOrder;
+                loadTable({ sort_by: sortBy, order: newOrder });
+            }
+        });
+    
+        // Автообновление раз в 30 сек
+        setInterval(() => {
+            loadTable(); // Обновляет текущую таблицу
+        }, 30000);
+    });
+    </script>
 {% endblock %}

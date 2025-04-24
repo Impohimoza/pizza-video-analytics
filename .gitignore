@@ -1,4 +1,5 @@
 __pycache__/
+.vscode/
 classification_10/
 
 # Django stuff:
@@ -8,3 +9,4 @@ db.sqlite3
 db.sqlite3-journal
 *.jpg
 *.jpeg
+*.png

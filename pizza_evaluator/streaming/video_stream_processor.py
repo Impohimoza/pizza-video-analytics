@@ -13,6 +13,7 @@ class VideoStreamProcessor:
     def __init__(self, src=0, control_line_x=400):
         self.cap = cv2.VideoCapture(src)
         self.tracker = SortTrackerManager(control_x=control_line_x)
+        print(os.getenv("PIZZA_DETECTOR"))
         self.detector = PizzaDetector(model_path=os.getenv("PIZZA_DETECTOR"))
         self.processor = CropProcessor()
         self.last_eval_time = 0

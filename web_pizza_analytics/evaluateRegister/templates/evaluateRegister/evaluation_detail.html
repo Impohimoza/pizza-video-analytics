@@ -15,7 +15,7 @@
         <!-- Основная информация -->
         <div class="row mb-4">
             <div class="col-md-6 mb-2">
-                <h5><strong>Пицца:</strong> {{ evaluation.pizza.name }}</h5>
+                <h5><strong>Пицца:</strong> {{ evaluation.pizza.name|default:"[Удалена]" }}</h5>
                 <h5><strong>Адрес пиццерии:</strong> {{ evaluation.location.address }}</h5>
             </div>
             <div class="col-md-6 mb-2">
