@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Детали оценки{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card shadow-lg p-4 mb-4">
+        <h2 class="text-center mb-4">Детали оценки</h2>
+
+        <!-- Фото пиццы -->
+        <div class="text-center mb-4">
+            <img src="{{ evaluation.photo.url }}" alt="Фото пиццы" 
+                 class="img-fluid rounded shadow-sm" style="max-width: 50%; height: auto;">
+        </div>
+
+        <!-- Основная информация -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-2">
+                <h5><strong>Пицца:</strong> {{ evaluation.pizza.name }}</h5>
+                <h5><strong>Адрес пиццерии:</strong> {{ evaluation.location.address }}</h5>
+            </div>
+            <div class="col-md-6 mb-2">
+                <h5><strong>Дата оценки:</strong> {{ evaluation.date|date:"d.m.Y H:i" }}</h5>
+                <h5><strong>Качество:</strong> {{ evaluation.quality_percentage|floatformat:1 }}%</h5>
+                <h5><strong>Процент корки:</strong> {{ evaluation.crust_percentage|floatformat:1 }}%</h5>
+            </div>
+        </div>
+
+        <!-- Таблица ингредиентов -->
+        <h4 class="mt-5 mb-3">Состав ингредиентов:</h4>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped align-middle text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Ингредиент</th>
+                        <th>Обнаружено</th>
+                        <th>Должно быть</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ing_eval in ingredient_evaluations %}
+                        <tr>
+                            <td>{{ ing_eval.ingredient.name }}</td>
+                            <td>{{ ing_eval.detected_quantity }}</td>
+                            <td>{{ ing_eval.expected_quantity }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3">Ингредиенты не найдены.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'evaluation_list' %}" class="btn btn-secondary">Назад к списку оценок</a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

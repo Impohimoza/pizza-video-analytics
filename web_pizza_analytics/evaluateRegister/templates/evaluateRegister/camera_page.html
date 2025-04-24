@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Просмотр камер{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="text-center my-4">Выберите пиццерию для просмотра камеры</h2>
+
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-6">
+            <select id="cameraSelect" class="form-select">
+                <option value="" selected disabled>-- Выберите пиццерию --</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.id }}">{{ loc.address }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div id="cameraView" class="border p-3 rounded" style="min-height: 360px;">
+                <p class="text-muted">Поток появится после выбора пиццерии</p>
+                <img id="cameraStream" src="" class="img-fluid d-none" style="max-height: 480px;">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const select = document.getElementById("cameraSelect");
+    const stream = document.getElementById("cameraStream");
+    const container = document.getElementById("cameraView");
+
+    select.addEventListener("change", function () {
+        const id = this.value;
+        stream.src = `/stream/${id}/`;
+        stream.classList.remove("d-none");
+        container.querySelector("p")?.remove();
+    });
+</script>
+{% endblock %}
+

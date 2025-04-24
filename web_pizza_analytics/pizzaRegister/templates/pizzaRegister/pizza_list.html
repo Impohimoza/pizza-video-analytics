@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Список пицц{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+    <h2 class="mb-4 text-center">Список пицц</h2>
+
+    <div class="text-end mb-4">
+        <a href="{% url 'add_pizza' %}" class="btn btn-success">Добавить новую пиццу</a>
+    </div>
+
+    <div class="row">
+        {% for pizza in pizzas %}
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm p-3">
+                    <h5>{{ pizza.name }}</h5>
+                    <p>Процент корки: {{ pizza.crust_percentage }}%</p>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'pizza_detail' pizza.id %}" class="btn btn-primary btn-sm">Посмотреть</a>
+                        <a href="{% url 'delete_pizza' pizza.id %}" class="btn btn-danger btn-sm"
+                           onclick="return confirm('Вы уверены, что хотите удалить пиццу?');">Удалить</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-center">Нет доступных пицц.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

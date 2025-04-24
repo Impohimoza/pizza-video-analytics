@@ -1,10 +1,10 @@
--- Расширение для работы с векторами
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Таблица с видами пицц
 CREATE TABLE IF NOT EXISTS pizzas (
     id SERIAL PRIMARY KEY,
-    name TEXT UNIQUE NOT NULL
+    name TEXT UNIQUE NOT NULL,
+    crust_percentage REAL NOT NULL DEFAULT 0  -- Процент корки
 );
 
 -- Таблица с ингредиентами
@@ -22,11 +22,11 @@ CREATE TABLE IF NOT EXISTS pizza_composition (
 );
 
 -- Таблица с эмбеддингами изображений пицц
-CREATE TABLE IF NOT EXISTS pizza_embeddings (
-    id SERIAL PRIMARY KEY,
-    pizza_id INTEGER REFERENCES pizzas(id) ON DELETE CASCADE,
-    image_name TEXT NOT NULL,
-    vector VECTOR(256),
-    UNIQUE (pizza_id, image_name)
-);
+-- CREATE TABLE IF NOT EXISTS pizza_embeddings (
+--     id SERIAL PRIMARY KEY,
+--     pizza_id INTEGER REFERENCES pizzas(id) ON DELETE CASCADE,
+--     image_name TEXT NOT NULL,
+--     vector VECTOR(256),
+--     UNIQUE (pizza_id, image_name)
+-- );
 
