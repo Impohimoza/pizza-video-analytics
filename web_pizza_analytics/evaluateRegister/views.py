@@ -17,35 +17,43 @@ def evaluation_list(request):
     evaluations = Evaluation.objects.all()
     pizzas = Pizzas.objects.all()
     locations = PizzeriaLocation.objects.all()
+    is_manager = request.user.is_authenticated and hasattr(request.user, 'pizzeria_location') and request.user.pizzeria_location and request.user.groups.filter(name="Менеджеры пиццерий").exists()
 
     # Фильтры
-    pizza_id = request.GET.get('pizza')
-    location_id = request.GET.get('location')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    quality = request.GET.get('quality')
+    if is_manager:
+        # Менеджер: фильтруем только по своей пиццерии
+        evaluations = evaluations.filter(location=request.user.pizzeria_location)
+        pizzas = pizzas.filter(pizzaembeddings__pizza__evaluation__location=request.user.pizzeria_location).distinct()
+        locations = PizzeriaLocation.objects.filter(id=request.user.pizzeria_location.id)
+    else:
+        # Админ: применяем фильтры
+        pizza_id = request.GET.get('pizza')
+        location_id = request.GET.get('location')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        quality = request.GET.get('quality')
 
-    if pizza_id:
-        evaluations = evaluations.filter(pizza_id=pizza_id)
-    if location_id:
-        evaluations = evaluations.filter(location_id=location_id)
-    if start_date:
-        try:
-            start = datetime.strptime(start_date, "%Y-%m-%d")
-            evaluations = evaluations.filter(date__gte=start)
-        except ValueError:
-            pass
-    if end_date:
-        try:
-            end = datetime.strptime(end_date, "%Y-%m-%d")
-            evaluations = evaluations.filter(date__lte=end)
-        except ValueError:
-            pass
-    if quality:
-        try:
-            evaluations = evaluations.filter(quality_percentage__lte=float(quality))
-        except ValueError:
-            pass
+        if pizza_id:
+            evaluations = evaluations.filter(pizza_id=pizza_id)
+        if location_id:
+            evaluations = evaluations.filter(location_id=location_id)
+        if start_date:
+            try:
+                start = datetime.strptime(start_date, "%Y-%m-%d")
+                evaluations = evaluations.filter(date__gte=start)
+            except ValueError:
+                pass
+        if end_date:
+            try:
+                end = datetime.strptime(end_date, "%Y-%m-%d")
+                evaluations = evaluations.filter(date__lte=end)
+            except ValueError:
+                pass
+        if quality:
+            try:
+                evaluations = evaluations.filter(quality_percentage__lte=float(quality))
+            except ValueError:
+                pass
 
     # Сортировка
     sort_by = request.GET.get("sort_by", "date")
@@ -60,6 +68,7 @@ def evaluation_list(request):
         "locations": locations,
         "sort_by": sort_by,
         "order": order,
+        "is_manager": is_manager,
     }
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
@@ -85,34 +94,45 @@ def evaluation_detail(request, evaluation_id):
 def evaluation_export(request):
     evaluations = Evaluation.objects.all()
 
-    # Те же фильтры, что и в списке
-    pizza_id = request.GET.get('pizza')
-    location_id = request.GET.get('location')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    quality = request.GET.get('quality')
+    evaluations = Evaluation.objects.all()
+    pizzas = Pizzas.objects.all()
+    is_manager = request.user.is_authenticated and hasattr(request.user, 'pizzeria_location') and request.user.pizzeria_location and request.user.groups.filter(name="Менеджеры пиццерий").exists()
 
-    if pizza_id:
-        evaluations = evaluations.filter(pizza_id=pizza_id)
-    if location_id:
-        evaluations = evaluations.filter(location_id=location_id)
-    if start_date:
-        try:
-            start = datetime.strptime(start_date, "%Y-%m-%d")
-            evaluations = evaluations.filter(date__gte=start)
-        except ValueError:
-            pass
-    if end_date:
-        try:
-            end = datetime.strptime(end_date, "%Y-%m-%d")
-            evaluations = evaluations.filter(date__lte=end)
-        except ValueError:
-            pass
-    if quality:
-        try:
-            evaluations = evaluations.filter(quality_percentage__lte=float(quality))
-        except ValueError:
-            pass
+    # Фильтры
+    if is_manager:
+        # Менеджер: фильтруем только по своей пиццерии
+        evaluations = evaluations.filter(location=request.user.pizzeria_location)
+        pizzas = pizzas.filter(pizzaembeddings__pizza__evaluation__location=request.user.pizzeria_location).distinct()
+        location_id = PizzeriaLocation.objects.filter(id=request.user.pizzeria_location.id)
+    else:
+        # Админ: применяем фильтры
+        pizza_id = request.GET.get('pizza')
+        location_id = request.GET.get('location')
+        start_date = request.GET.get('start_date')
+        end_date = request.GET.get('end_date')
+        quality = request.GET.get('quality')
+
+        if pizza_id:
+            evaluations = evaluations.filter(pizza_id=pizza_id)
+        if location_id:
+            evaluations = evaluations.filter(location_id=location_id)
+        if start_date:
+            try:
+                start = datetime.strptime(start_date, "%Y-%m-%d")
+                evaluations = evaluations.filter(date__gte=start)
+            except ValueError:
+                pass
+        if end_date:
+            try:
+                end = datetime.strptime(end_date, "%Y-%m-%d")
+                evaluations = evaluations.filter(date__lte=end)
+            except ValueError:
+                pass
+        if quality:
+            try:
+                evaluations = evaluations.filter(quality_percentage__lte=float(quality))
+            except ValueError:
+                pass
 
     # Создание Excel файла
     wb = openpyxl.Workbook()
@@ -272,5 +292,11 @@ def stream_camera(request, location_id):
 
 @login_required(login_url='/login/')
 def camera_page(request):
-    locations = PizzeriaLocation.objects.exclude(stream_url__isnull=True).exclude(stream_url='')
+    is_manager = request.user.is_authenticated and hasattr(request.user, 'pizzeria_location') and request.user.pizzeria_location and request.user.groups.filter(name="Менеджеры пиццерий").exists()
+
+    # Фильтры
+    if is_manager:
+        locations = PizzeriaLocation.objects.filter(id=request.user.pizzeria_location.id)
+    else:
+        locations = PizzeriaLocation.objects.exclude(stream_url__isnull=True).exclude(stream_url='')
     return render(request, 'evaluateRegister/camera_page.html', {'locations': locations})

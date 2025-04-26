@@ -9,11 +9,18 @@ from django.db import models
 from pgvector.django import VectorField
 
 
+class Pizzas(models.Model):
+    name = models.TextField(unique=True)
+    crust_percentage = models.FloatField()
+
+    class Meta:
+        db_table = 'pizzas'
+
+
 class Ingredients(models.Model):
     name = models.TextField(unique=True)
 
     class Meta:
-        managed = False
         db_table = 'ingredients'
 
 
@@ -23,7 +30,6 @@ class PizzaComposition(models.Model):
     quantity = models.IntegerField()
 
     class Meta:
-        managed = False
         db_table = 'pizza_composition'
         unique_together = (('pizza', 'ingredient'),)
 
@@ -38,14 +44,3 @@ class PizzaEmbeddings(models.Model):
 
     class Meta:
         db_table = 'pizza_embeddings'
-
-
-class Pizzas(models.Model):
-    name = models.TextField(unique=True)
-    crust_percentage = models.FloatField()
-
-    class Meta:
-        managed = False
-        db_table = 'pizzas'
-
-

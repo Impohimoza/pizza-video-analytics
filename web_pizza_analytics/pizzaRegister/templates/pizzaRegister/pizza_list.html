@@ -5,10 +5,11 @@
 
 <div class="container py-5">
     <h2 class="mb-4 text-center">Список пицц</h2>
-
+    {% if is_admin %}
     <div class="text-end mb-4">
         <a href="{% url 'add_pizza' %}" class="btn btn-success">Добавить новую пиццу</a>
     </div>
+    {% endif %}
 
     <div class="row">
         {% for pizza in pizzas %}
@@ -18,8 +19,10 @@
                     <p>Процент корки: {{ pizza.crust_percentage }}%</p>
                     <div class="d-flex justify-content-between">
                         <a href="{% url 'pizza_detail' pizza.id %}" class="btn btn-primary btn-sm">Посмотреть</a>
+                        {% if is_admin %}
                         <a href="{% url 'delete_pizza' pizza.id %}" class="btn btn-danger btn-sm"
                            onclick="return confirm('Вы уверены, что хотите удалить пиццу?');">Удалить</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>

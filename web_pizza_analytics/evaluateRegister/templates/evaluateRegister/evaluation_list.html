@@ -20,7 +20,7 @@
                     {% endfor %}
                 </select>
             </div>
-
+            {% if not is_manager %}
             <div class="col-md-4">
                 <label for="location" class="form-label">Адрес пиццерии:</label>
                 <select id="location" name="location" class="form-select">
@@ -32,6 +32,7 @@
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
 
             <div class="col-md-2">
                 <label for="start_date" class="form-label">Дата от:</label>

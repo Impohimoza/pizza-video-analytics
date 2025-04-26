@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.core.exceptions import PermissionDenied
 from .forms import PizzaForm, SinglePizzaImageForm, PizzaCompositionForm
 from .models import Pizzas, PizzaEmbeddings, PizzaComposition
 from .keras_model_loader import FeatureExtractor
@@ -7,6 +8,8 @@ from django.contrib.auth.decorators import login_required
 
 @login_required(login_url='/login/')
 def add_pizza(request):
+    if not request.user.is_superuser and not request.user.groups.filter(name="Администраторы сети").exists():
+        raise PermissionDenied("У вас нет прав на добавление пиццы.")
     error_message = None
 
     if request.method == 'POST':
@@ -66,8 +69,9 @@ def add_pizza(request):
 
 @login_required(login_url='/login/')
 def pizza_list(request):
+    is_admin = request.user.is_superuser or request.user.groups.filter(name="Администраторы сети").exists()
     pizzas = Pizzas.objects.all()
-    return render(request, 'pizzaRegister/pizza_list.html', {'pizzas': pizzas})
+    return render(request, 'pizzaRegister/pizza_list.html', {'pizzas': pizzas, 'is_admin': is_admin})
 
 
 @login_required(login_url='/login/')
@@ -85,6 +89,8 @@ def pizza_detail(request, pizza_id):
 
 @login_required(login_url='/login/')
 def delete_pizza(request, pizza_id):
+    if not request.user.is_superuser and not request.user.groups.filter(name="Администраторы сети").exists():
+        raise PermissionDenied("У вас нет прав на удаление пиццы.")
     pizza = get_object_or_404(Pizzas, id=pizza_id)
     pizza.delete()
     return redirect('pizza_list')
