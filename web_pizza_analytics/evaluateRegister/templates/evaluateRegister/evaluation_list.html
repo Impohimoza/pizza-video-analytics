@@ -41,11 +41,15 @@
 
             <div class="col-md-2">
                 <label for="end_date" class="form-label">Дата до:</label>
-                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}" class="form-control">
+                <input type="date" id="end_date" name="end_date" value="{{request.GET.end_date }}" class="form-control">
+            </div>
+            <div class="col-md-2">
+                <label for="quality" class="form-label">Мин. качество (%):</label>
+                <input type="number" id="quality_min" name="quality_min" class="form-control" value="{% if request.GET.quality_min %}{{ request.GET.quality_min }}{% else %}0{% endif %}" min="0" max="100" step="0.1">
             </div>
             <div class="col-md-2">
                 <label for="quality" class="form-label">Макс. качество (%):</label>
-                <input type="number" id="quality" name="quality" class="form-control" value="{{ request.GET.quality }}" min="0" max="100" step="0.1">
+                <input type="number" id="quality_max" name="quality_max" class="form-control" value="{% if request.GET.quality_max %}{{ request.GET.quality_max }}{% else %}100{% endif %}" min="0" max="100" step="0.1">
             </div>
         </div>
 

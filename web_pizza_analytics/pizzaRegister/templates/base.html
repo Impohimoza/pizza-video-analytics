@@ -30,6 +30,9 @@
               </div>
               {% endif %}
               <li class="nav-item">
+                <a class="nav-link" href="{% url 'reports_page' %}">Отчеты</a>
+              </li>
+              <li class="nav-item">
                 <a class="nav-link" href="{% url 'camera_page' %}">Камеры пиццерий</a>
               </li>
               <li class="nav-item">
@@ -54,7 +57,37 @@
 
 <!-- Правильное подключение JS после body -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+      let lastCount = {{ unread_notifications_count|default:0 }};
+      
+      function checkNotifications() {
+          fetch("{% url 'check_notifications' %}")
+              .then(response => response.json())
+              .then(data => {
+                  if (data.new_count > lastCount) {
+                      showNotificationPopup(data.new_count - lastCount);
+                      lastCount = data.new_count;
+                  }
+              });
+      }
+  
+      function showNotificationPopup(newCount) {
+          const popup = document.createElement('div');
+          popup.className = 'alert alert-warning position-fixed top-0 start-50 translate-middle-x mt-5 shadow';
+          popup.style.zIndex = '1055';
+          popup.innerHTML = `<strong>📢 Новое уведомление!</strong> (${newCount})<br><a href="{% url 'notifications_list' %}" class="btn btn-sm btn-primary mt-2">Посмотреть</a>`;
+  
+          document.body.appendChild(popup);
+  
+          setTimeout(() => {
+              popup.remove();
+          }, 5000); // Убираем через 5 секунд
+      }
+  
+      setInterval(checkNotifications, 10000); // Проверка каждые 10 секунд
+  });
+  </script>
 </body>
 </html>
 

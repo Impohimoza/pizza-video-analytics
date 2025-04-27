@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Отчёты{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="text-center mb-4">Отчёты</h2>
+
+    <!-- Форма выбора периода -->
+    <form method="get" class="row g-3 mb-5">
+        {% if not request.user.groups.all.0.name == "Менеджеры пиццерий" %}
+        <div class="col-md-4">
+            <label for="location">Пиццерия:</label>
+            <select name="location" id="location" class="form-select">
+                <option value="">Все точки</option>
+                {% for loc in locations %}
+                    <option value="{{ loc.id }}" {% if request.GET.location == loc.id|stringformat:"s" %}selected{% endif %}>
+                        {{ loc.address }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        
+        <div class="col-md-3">
+            <label for="start_date">От:</label>
+            <input type="date" name="start_date" id="start_date" class="form-control" value="{{ request.GET.start_date }}">
+        </div>
+
+        <div class="col-md-3">
+            <label for="end_date">До:</label>
+            <input type="date" name="end_date" id="end_date" class="form-control" value="{{ request.GET.end_date }}">
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">Применить</button>
+        </div>
+    </form>
+
+    <!-- Процент несоответствий -->
+    <h4>Процент несоответствий по типам блюд:</h4>
+    <table class="table table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Тип пиццы</th>
+                <th>Среднее качество (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in non_compliance_by_pizza %}
+            <tr>
+                <td>{{ item.pizza__name }}</td>
+                <td>{{ item.avg_quality|floatformat:1 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="2" class="text-center">Нет данных для отображения.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- График динамики нарушений -->
+    <h4 class="mt-5">Динамика числа нарушений:</h4>
+    <canvas id="dynamicsChart" height="100"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const ctx = document.getElementById('dynamicsChart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [
+            {% for d in dynamics %}
+                '{{ d.date_only|date:"d.m.Y" }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            label: 'Количество нарушений',
+            data: [
+                {% for d in dynamics %}
+                    {{ d.bad_count }},
+                {% endfor %}
+            ],
+            fill: false,
+            borderColor: 'rgb(255, 99, 132)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        scales: {
+            y: {
+                beginAtZero: true,
+                stepSize: 1
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

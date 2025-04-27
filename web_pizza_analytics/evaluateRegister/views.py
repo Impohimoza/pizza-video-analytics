@@ -6,6 +6,9 @@ from django.contrib.auth.decorators import login_required
 import openpyxl
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db import models
+from django.db.models import Count, Avg
+from django.db.models.functions import TruncDate
 import uuid
 import cv2
 import json
@@ -22,7 +25,11 @@ def evaluation_list(request):
     pizzas = Pizzas.objects.all()
     locations = PizzeriaLocation.objects.all()
     is_manager = request.user.is_authenticated and hasattr(request.user, 'pizzeria_location') and request.user.pizzeria_location and request.user.groups.filter(name="Менеджеры пиццерий").exists()
-
+    pizza_id = request.GET.get('pizza')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    quality_max = request.GET.get('quality_max')
+    quality_min = request.GET.get('quality_min')
     # Фильтры
     if is_manager:
         # Менеджер: фильтруем только по своей пиццерии
@@ -31,33 +38,30 @@ def evaluation_list(request):
         locations = PizzeriaLocation.objects.filter(id=request.user.pizzeria_location.id)
     else:
         # Админ: применяем фильтры
-        pizza_id = request.GET.get('pizza')
         location_id = request.GET.get('location')
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
-        quality = request.GET.get('quality')
 
-        if pizza_id:
-            evaluations = evaluations.filter(pizza_id=pizza_id)
         if location_id:
             evaluations = evaluations.filter(location_id=location_id)
-        if start_date:
-            try:
-                start = datetime.strptime(start_date, "%Y-%m-%d")
-                evaluations = evaluations.filter(date__gte=start)
-            except ValueError:
-                pass
-        if end_date:
-            try:
-                end = datetime.strptime(end_date, "%Y-%m-%d")
-                evaluations = evaluations.filter(date__lte=end)
-            except ValueError:
-                pass
-        if quality:
-            try:
-                evaluations = evaluations.filter(quality_percentage__lte=float(quality))
-            except ValueError:
-                pass
+
+    if pizza_id:
+        evaluations = evaluations.filter(pizza_id=pizza_id)
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            evaluations = evaluations.filter(date__gte=start)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+            evaluations = evaluations.filter(date__lte=end)
+        except ValueError:
+            pass
+    if quality_max or quality_min:
+        try:
+            evaluations = evaluations.filter(quality_percentage__range=(float(quality_min), float(quality_max)))
+        except ValueError:
+            pass
 
     # Сортировка
     sort_by = request.GET.get("sort_by", "date")
@@ -105,43 +109,44 @@ def evaluation_export(request):
 
     evaluations = Evaluation.objects.all()
     pizzas = Pizzas.objects.all()
+    locations = PizzeriaLocation.objects.all()
     is_manager = request.user.is_authenticated and hasattr(request.user, 'pizzeria_location') and request.user.pizzeria_location and request.user.groups.filter(name="Менеджеры пиццерий").exists()
-
+    pizza_id = request.GET.get('pizza')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    quality_max = request.GET.get('quality_max')
+    quality_min = request.GET.get('quality_min')
     # Фильтры
     if is_manager:
         # Менеджер: фильтруем только по своей пиццерии
         evaluations = evaluations.filter(location=request.user.pizzeria_location)
         pizzas = pizzas.filter(pizzaembeddings__pizza__evaluation__location=request.user.pizzeria_location).distinct()
-        location_id = PizzeriaLocation.objects.filter(id=request.user.pizzeria_location.id)
     else:
         # Админ: применяем фильтры
-        pizza_id = request.GET.get('pizza')
         location_id = request.GET.get('location')
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date')
-        quality = request.GET.get('quality')
 
-        if pizza_id:
-            evaluations = evaluations.filter(pizza_id=pizza_id)
         if location_id:
             evaluations = evaluations.filter(location_id=location_id)
-        if start_date:
-            try:
-                start = datetime.strptime(start_date, "%Y-%m-%d")
-                evaluations = evaluations.filter(date__gte=start)
-            except ValueError:
-                pass
-        if end_date:
-            try:
-                end = datetime.strptime(end_date, "%Y-%m-%d")
-                evaluations = evaluations.filter(date__lte=end)
-            except ValueError:
-                pass
-        if quality:
-            try:
-                evaluations = evaluations.filter(quality_percentage__lte=float(quality))
-            except ValueError:
-                pass
+
+    if pizza_id:
+        evaluations = evaluations.filter(pizza_id=pizza_id)
+    if start_date:
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d")
+            evaluations = evaluations.filter(date__gte=start)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            end = datetime.strptime(end_date, "%Y-%m-%d")
+            evaluations = evaluations.filter(date__lte=end)
+        except ValueError:
+            pass
+    if quality_max or quality_min:
+        try:
+            evaluations = evaluations.filter(quality_percentage__range=(float(quality_min), float(quality_max)))
+        except ValueError:
+            pass
 
     # Создание Excel файла
     wb = openpyxl.Workbook()
@@ -325,6 +330,7 @@ def camera_page(request):
         'unread_notifications_count': unread_notifications_count
         })
 
+
 @login_required(login_url='/login/')
 def notifications_list(request):
     unread_notifications_count = 0
@@ -336,6 +342,7 @@ def notifications_list(request):
         'unread_notifications_count': unread_notifications_count
         })
 
+
 @login_required(login_url='/login/')
 def notification_redirect(request, notification_id):
     notification = get_object_or_404(Notification, id=notification_id, user=request.user)
@@ -345,3 +352,52 @@ def notification_redirect(request, notification_id):
         notification.save()
 
     return redirect('evaluation_detail', evaluation_id=notification.evaluation.id)
+
+
+@login_required(login_url='/login/')
+def check_new_notifications(request):
+    new_notifications_count = request.user.notifications.filter(is_read=False).count()
+    return JsonResponse({'new_count': new_notifications_count})
+
+
+@login_required(login_url='/login/')
+def reports_page(request):
+    pizzas = Pizzas.objects.all()
+    locations = PizzeriaLocation.objects.all()
+    
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    location_id = request.GET.get('location')
+
+    evaluations = Evaluation.objects.all()
+
+    # Менеджеру показываем только свою пиццерию
+    if request.user.groups.filter(name="Менеджеры пиццерий").exists():
+        evaluations = evaluations.filter(location=request.user.pizzeria_location)
+        locations = PizzeriaLocation.objects.filter(id=request.user.pizzeria_location.id)
+    else:
+        if location_id:
+            evaluations = evaluations.filter(location_id=location_id)
+
+    if start_date:
+        evaluations = evaluations.filter(date__gte=start_date)
+    if end_date:
+        evaluations = evaluations.filter(date__lte=end_date)
+
+    # Процент несоответствий по типам пицц
+    non_compliance_by_pizza = evaluations.values('pizza__name').annotate(
+        avg_quality=Avg('quality_percentage')
+    )
+
+    # Динамика нарушений по дням
+    dynamics = evaluations.annotate(date_only=TruncDate('date')).values('date_only').annotate(
+        bad_count=Count('id', filter=models.Q(quality_percentage__lt=70))
+    ).order_by('date_only')
+
+    context = {
+        'pizzas': pizzas,
+        'locations': locations,
+        'non_compliance_by_pizza': non_compliance_by_pizza,
+        'dynamics': dynamics,
+    }
+    return render(request, 'evaluateRegister/reports_page.html', context)

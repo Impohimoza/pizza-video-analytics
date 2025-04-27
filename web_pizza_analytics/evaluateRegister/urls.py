@@ -10,4 +10,6 @@ urlpatterns = [
     path('cameras/', views.camera_page, name='camera_page'),
     path('notifications/', views.notifications_list, name='notifications_list'),
     path('notifications/<int:notification_id>/open/', views.notification_redirect, name='notification_redirect'),
+    path('notifications/check/', views.check_new_notifications, name='check_notifications'),
+    path('reports/', views.reports_page, name='reports_page'),
 ]
