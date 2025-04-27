@@ -8,6 +8,9 @@ from django.contrib.auth.decorators import login_required
 
 @login_required(login_url='/login/')
 def add_pizza(request):
+    unread_notifications_count = 0
+    if request.user.is_authenticated:
+        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
     if not request.user.is_superuser and not request.user.groups.filter(name="Администраторы сети").exists():
         raise PermissionDenied("У вас нет прав на добавление пиццы.")
     error_message = None
@@ -64,18 +67,29 @@ def add_pizza(request):
         'image_forms': image_forms,
         'composition_forms': composition_forms,
         'error_message': error_message,
+        'unread_notifications_count': unread_notifications_count
     })
 
 
 @login_required(login_url='/login/')
 def pizza_list(request):
+    unread_notifications_count = 0
+    if request.user.is_authenticated:
+        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
     is_admin = request.user.is_superuser or request.user.groups.filter(name="Администраторы сети").exists()
     pizzas = Pizzas.objects.all()
-    return render(request, 'pizzaRegister/pizza_list.html', {'pizzas': pizzas, 'is_admin': is_admin})
+    return render(request, 'pizzaRegister/pizza_list.html', {
+        'pizzas': pizzas,
+        'is_admin': is_admin,
+        'unread_notifications_count': unread_notifications_count
+        })
 
 
 @login_required(login_url='/login/')
 def pizza_detail(request, pizza_id):
+    unread_notifications_count = 0
+    if request.user.is_authenticated:
+        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
     pizza = get_object_or_404(Pizzas, id=pizza_id)
     compositions = PizzaComposition.objects.filter(pizza=pizza)
     images = PizzaEmbeddings.objects.filter(pizza=pizza)
@@ -84,6 +98,7 @@ def pizza_detail(request, pizza_id):
         'pizza': pizza,
         'compositions': compositions,
         'images': images,
+        'unread_notifications_count': unread_notifications_count
     })
 
 

@@ -1,6 +1,7 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from pizzaRegister.models import Pizzas, Ingredients, PizzaComposition
-from .models import Evaluation, PizzeriaLocation, IngredientEvaluation
+from .models import Evaluation, PizzeriaLocation, IngredientEvaluation, Notification
+from accounts.models import CustomUser
 from django.contrib.auth.decorators import login_required
 import openpyxl
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
@@ -14,6 +15,9 @@ from datetime import datetime
 # Список всех оценок с фильтрами
 @login_required(login_url='/login/')
 def evaluation_list(request):
+    unread_notifications_count = 0
+    if request.user.is_authenticated:
+        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
     evaluations = Evaluation.objects.all()
     pizzas = Pizzas.objects.all()
     locations = PizzeriaLocation.objects.all()
@@ -69,6 +73,7 @@ def evaluation_list(request):
         "sort_by": sort_by,
         "order": order,
         "is_manager": is_manager,
+        'unread_notifications_count': unread_notifications_count,
     }
 
     if request.headers.get("x-requested-with") == "XMLHttpRequest":
@@ -80,6 +85,9 @@ def evaluation_list(request):
 # Подробная страница одной оценки
 @login_required(login_url='/login/')
 def evaluation_detail(request, evaluation_id):
+    unread_notifications_count = 0
+    if request.user.is_authenticated:
+        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
     evaluation = get_object_or_404(Evaluation, id=evaluation_id)
 
     ingredient_evaluations = evaluation.ingredient_evaluations.select_related('ingredient').all()
@@ -87,6 +95,7 @@ def evaluation_detail(request, evaluation_id):
     return render(request, 'evaluateRegister/evaluation_detail.html', {
         'evaluation': evaluation,
         'ingredient_evaluations': ingredient_evaluations,
+        'unread_notifications_count': unread_notifications_count,
     })
 
 
@@ -258,6 +267,15 @@ def create_evaluation_api(request):
         crust_expected=float(expected_crust_percentage),
         penalties=ingredient_penalties
     )
+    if final_quality < 70.0:
+        # Находим всех менеджеров этой пиццерии
+        managers = CustomUser.objects.filter(pizzeria_location=evaluation.location)
+        for manager in managers:
+            Notification.objects.create(
+                user=manager,
+                evaluation=evaluation,
+                message=f"Новая оценка качества {final_quality:.1f}% для пиццы {evaluation.pizza.name}. Требуется внимание!"
+            )
 
     # Обновляем качество в Evaluation
     evaluation.quality_percentage = final_quality
@@ -292,6 +310,9 @@ def stream_camera(request, location_id):
 
 @login_required(login_url='/login/')
 def camera_page(request):
+    unread_notifications_count = 0
+    if request.user.is_authenticated:
+        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
     is_manager = request.user.is_authenticated and hasattr(request.user, 'pizzeria_location') and request.user.pizzeria_location and request.user.groups.filter(name="Менеджеры пиццерий").exists()
 
     # Фильтры
@@ -299,4 +320,28 @@ def camera_page(request):
         locations = PizzeriaLocation.objects.filter(id=request.user.pizzeria_location.id)
     else:
         locations = PizzeriaLocation.objects.exclude(stream_url__isnull=True).exclude(stream_url='')
-    return render(request, 'evaluateRegister/camera_page.html', {'locations': locations})
+    return render(request, 'evaluateRegister/camera_page.html', {
+        'locations': locations,
+        'unread_notifications_count': unread_notifications_count
+        })
+
+@login_required(login_url='/login/')
+def notifications_list(request):
+    unread_notifications_count = 0
+    if request.user.is_authenticated:
+        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
+    notifications = request.user.notifications.all().order_by('-created_at')
+    return render(request, 'evaluateRegister/notifications_list.html', {
+        'notifications': notifications,
+        'unread_notifications_count': unread_notifications_count
+        })
+
+@login_required(login_url='/login/')
+def notification_redirect(request, notification_id):
+    notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+
+    if not notification.is_read:
+        notification.is_read = True
+        notification.save()
+
+    return redirect('evaluation_detail', evaluation_id=notification.evaluation.id)

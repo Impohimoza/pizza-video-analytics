@@ -8,4 +8,6 @@ urlpatterns = [
     path('api/create_evaluation/', views.create_evaluation_api, name='create_evaluation_api'),
     path('stream/<int:location_id>/', views.stream_camera, name='stream_camera'),
     path('cameras/', views.camera_page, name='camera_page'),
+    path('notifications/', views.notifications_list, name='notifications_list'),
+    path('notifications/<int:notification_id>/open/', views.notification_redirect, name='notification_redirect'),
 ]

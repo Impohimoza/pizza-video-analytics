@@ -1,5 +1,6 @@
 from django.db import models
 from pizzaRegister.models import Pizzas, Ingredients
+from django.conf import settings
 import uuid
 
 
@@ -29,3 +30,14 @@ class IngredientEvaluation(models.Model):
     ingredient = models.ForeignKey(Ingredients, on_delete=models.CASCADE)  # <--- СВЯЗЫВАЕМ с моделью ингредиентов
     detected_quantity = models.IntegerField()
     expected_quantity = models.IntegerField()
+
+
+class Notification(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
+    evaluation = models.ForeignKey(Evaluation, on_delete=models.CASCADE)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Уведомление для {self.user.username}"

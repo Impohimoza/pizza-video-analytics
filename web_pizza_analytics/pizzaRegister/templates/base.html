@@ -19,6 +19,16 @@
       
           <div class="collapse navbar-collapse" id="navbarNavDropdown">
             <ul class="navbar-nav ms-auto">
+              {% if request.user.is_authenticated %}
+              <div class="position-relative">
+                  <a href="{% url 'notifications_list' %}" class="btn btn-outline-warning">
+                      🔔
+                      {% if unread_notifications_count %}
+                          <span class="badge bg-danger">{{ unread_notifications_count }}</span>
+                      {% endif %}
+                  </a>
+              </div>
+              {% endif %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'camera_page' %}">Камеры пиццерий</a>
               </li>
