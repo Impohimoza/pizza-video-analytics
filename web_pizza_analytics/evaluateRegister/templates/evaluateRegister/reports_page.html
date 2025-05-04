@@ -8,7 +8,7 @@
     <!-- Форма выбора периода -->
     <form method="get" class="row g-3 mb-5">
         {% if not request.user.groups.all.0.name == "Менеджеры пиццерий" %}
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label for="location">Пиццерия:</label>
             <select name="location" id="location" class="form-select">
                 <option value="">Все точки</option>
@@ -20,6 +20,17 @@
             </select>
         </div>
         {% endif %}
+        <div class="col-md-3">
+            <label for="pizza">Тип пиццы:</label>
+            <select name="pizza" id="pizza" class="form-select">
+                <option value="">Все пиццы</option>
+                {% for pizza in pizzas %}
+                    <option value="{{ pizza.id }}" {% if request.GET.pizza == pizza.id|stringformat:"s" %}selected{% endif %}>
+                        {{ pizza.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
         
         <div class="col-md-3">
             <label for="start_date">От:</label>
@@ -34,6 +45,13 @@
         <div class="col-md-2 d-flex align-items-end">
             <button type="submit" class="btn btn-primary w-100">Применить</button>
         </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <a href="{% url 'export_excel' %}?start_date={{ request.GET.start_date }}&end_date={{ request.GET.end_date }}&location={{ request.GET.location }}&pizza={{ request.GET.pizza }}" class="btn btn-success w-100">
+                Экспорт в Excel
+            </a>
+        </div>
+        
+
     </form>
 
     <!-- Процент несоответствий -->

@@ -12,4 +12,5 @@ urlpatterns = [
     path('notifications/<int:notification_id>/open/', views.notification_redirect, name='notification_redirect'),
     path('notifications/check/', views.check_new_notifications, name='check_notifications'),
     path('reports/', views.reports_page, name='reports_page'),
+    path('reports/export_excel/', views.export_excel, name='export_excel'),
 ]

@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+import openpyxl.utils
 from pizzaRegister.models import Pizzas, Ingredients, PizzaComposition
 from .models import Evaluation, PizzeriaLocation, IngredientEvaluation, Notification
 from accounts.models import CustomUser
@@ -368,6 +369,7 @@ def reports_page(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     location_id = request.GET.get('location')
+    pizza_id = request.GET.get('pizza')  # Новый фильтр по пицце
 
     evaluations = Evaluation.objects.all()
 
@@ -378,7 +380,8 @@ def reports_page(request):
     else:
         if location_id:
             evaluations = evaluations.filter(location_id=location_id)
-
+    if pizza_id:
+        evaluations = evaluations.filter(pizza_id=pizza_id)
     if start_date:
         evaluations = evaluations.filter(date__gte=start_date)
     if end_date:
@@ -401,3 +404,46 @@ def reports_page(request):
         'dynamics': dynamics,
     }
     return render(request, 'evaluateRegister/reports_page.html', context)
+
+
+@login_required(login_url='/login/')
+def export_excel(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    location_id = request.GET.get('location')
+    pizza_id = request.GET.get('pizza')
+
+    evaluations = Evaluation.objects.all()
+
+    if request.user.groups.filter(name="Менеджеры пиццерий").exists():
+        evaluations = evaluations.filter(location=request.user.pizzeria_location)
+    else:
+        if location_id:
+            evaluations = evaluations.filter(location_id=location_id)
+
+    if pizza_id:
+        evaluations = evaluations.filter(pizza_id=pizza_id)
+    if start_date:
+        evaluations = evaluations.filter(date__gte=start_date)
+    if end_date:
+        evaluations = evaluations.filter(date__lte=end_date)
+
+    wb = openpyxl.Workbook()
+    ws1 = wb.active
+    ws1.title = "Несоответствия по пиццам"
+
+    ws1.append(["Тип пиццы", "Среднее качество (%)"])
+    for row in evaluations.values('pizza__name').annotate(avg=Avg('quality_percentage')):
+        ws1.append([row['pizza__name'], round(row['avg'], 1)])
+
+    ws2 = wb.create_sheet("Динамика нарушений")
+    ws2.append(["Дата", "Число нарушений (<70%)"])
+    for row in evaluations.annotate(date_only=TruncDate('date')).values('date_only').annotate(
+        count=Count('id', filter=models.Q(quality_percentage__lt=70))
+    ).order_by('date_only'):
+        ws2.append([row['date_only'].strftime('%d.%m.%Y'), row['count']])
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=report.xlsx'
+    wb.save(response)
+    return response
