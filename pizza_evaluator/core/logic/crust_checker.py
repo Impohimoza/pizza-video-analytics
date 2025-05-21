@@ -6,13 +6,16 @@ from ..segmentation.crust_segmentation import CrustSegmentation
 
 class CrustChecker:
     """Класс для получения процента корки на пицце"""
-    def __init__(self, model: CrustSegmentation):
-        self.seg_model = model
 
-    def get_percentage_crust(self, image: np.ndarray) -> float:
+    def get_percentage_crust(self, image: np.ndarray, segmentation_result) -> float:
         """Функция для расчета процента корки
         на пицце по маскам корки и начинки"""
-        masks = self.seg_model.detect(image)
+        masks = []
+        if segmentation_result.masks is None:
+            return None
+        for mask_tensor, cls in zip(segmentation_result.masks.data, segmentation_result.boxes.cls):
+            # mask_tensor - это маска в размере input'а модели
+            masks.append((mask_tensor.cpu().numpy().astype(np.uint8), cls))
 
         if masks is None:
             return 0.0

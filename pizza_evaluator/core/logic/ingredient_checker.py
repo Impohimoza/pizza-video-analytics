@@ -5,9 +5,9 @@ from db.postgres import pg
 
 class IngredientChecker:
     """Класс содержащий логику подсчета количества ингредиентов в пицце"""
-    def __init__(self, detector):
+    def __init__(self, class_names):
         self.cursor = pg.get_cursor()
-        self.detector = detector
+        self.class_names = class_names
 
     def get_allowed_ingredients(self, pizza_id):
         """Функция для получения всех ингредиентов в пицце"""
@@ -23,10 +23,14 @@ class IngredientChecker:
         # {name: (id, count)}
         return {row[0]: (row[1], row[2]) for row in rows}
 
-    def count_ingredients(self, image, pizza_id):
+    def count_ingredients(self, pizza_id, detection_result):
         """Функция для подсчета количества ингредиентов"""
         allowed = self.get_allowed_ingredients(pizza_id)  # {name: (id, count)}
-        detected_names = self.detector.detect(image)
+        detected_names = []
+        for box in detection_result[0].boxes:
+            cls_id = int(box.cls.cpu().numpy()[0])
+            name = self.class_names[cls_id]
+            detected_names.append(name)
 
         # Оставляем только допустимые по рецепту
         filtered = [name for name in detected_names if name in allowed]

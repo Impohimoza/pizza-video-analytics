@@ -15,9 +15,4 @@ class IngredientDetector:
         results = self.model.predict(image,
                                      conf=self.conf_thresh,
                                      verbose=False)
-        detections = []
-        for box in results[0].boxes:
-            cls_id = int(box.cls.cpu().numpy()[0])
-            name = self.class_names[cls_id]
-            detections.append(name)
-        return detections
+        return results

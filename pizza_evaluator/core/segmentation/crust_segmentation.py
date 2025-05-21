@@ -12,10 +12,4 @@ class CrustSegmentation:
         """Функция для получения сегментированных участков"""
         results = self.model(image, verbose=False)[0]
 
-        masks = []
-        if results.masks is None:
-            return None
-        for mask_tensor, cls in zip(results.masks.data, results.boxes.cls):
-            # mask_tensor - это маска в размере input'а модели
-            masks.append((mask_tensor.cpu().numpy().astype(np.uint8), cls))
-        return masks
+        return results

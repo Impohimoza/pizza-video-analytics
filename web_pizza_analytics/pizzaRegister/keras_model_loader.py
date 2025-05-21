@@ -6,7 +6,7 @@ import os
 
 
 class FeatureExtractor:
-    def __init__(self, model_filename='feature_extractor.keras'):
+    def __init__(self, model_filename='embedding_model_resnet.h5'):
         model_path = os.path.join(settings.BASE_DIR, 'models', model_filename)
         self.model = tf.keras.models.load_model(model_path)
 
