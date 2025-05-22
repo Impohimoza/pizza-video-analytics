@@ -3,13 +3,14 @@ import cv2
 
 
 class DistributionChecker:
-    """Класс содержащий логику подсчета количества ингредиентов в пицце"""
+    """Класс для подсчета распределение ингредиентов по начинке"""
     def __init__(self, min_overlap_ratio=0.3):
         self.min_overlap_ratio = min_overlap_ratio
 
-    def preprocessing_segmentation(self, segmentation_result, image: np.ndarray):
-        # Предположим, что класс начинки — это класс с label == 1 (нужно уточнить!)
-        # Получаем маску начинки
+    def preprocessing_segmentation(self,
+                                   segmentation_result,
+                                   image: np.ndarray) -> np.ndarray:
+        """Метод для получения маски начинки"""
         masks = segmentation_result.masks.data.cpu().numpy()  # (N, H, W)
         classes = segmentation_result.boxes.cls.cpu().numpy()  # классы масок
 
@@ -27,18 +28,25 @@ class DistributionChecker:
         filling_mask_bin = (filling_mask > 0.5).astype(np.uint8)
 
         # Resize до исходного размера изображения (если нужно)
-        filling_mask_bin = cv2.resize(filling_mask_bin, (image.shape[1], image.shape[0]), interpolation=cv2.INTER_NEAREST)
+        filling_mask_bin = cv2.resize(filling_mask_bin,
+                                      (image.shape[1], image.shape[0]),
+                                      interpolation=cv2.INTER_NEAREST)
         return filling_mask_bin
 
     def preprocessing_detection(self, detection_result):
+        """Метод для получения обнаруженных ингредиентов"""
         boxes = []
-        for box, cls in zip(detection_result.boxes.xyxy.cpu().numpy(), detection_result.boxes.cls.cpu().numpy()):
+        for box, cls in zip(detection_result.boxes.xyxy.cpu().numpy(),
+                            detection_result.boxes.cls.cpu().numpy()):
             x1, y1, x2, y2 = box
             class_id = int(cls)
             boxes.append((x1, y1, x2, y2, class_id))
         return boxes
 
-    def ingredient_distribution_score(self, image: np.ndarray, detection_result, segmentation_result):
+    def ingredient_distribution_score(self,
+                                      image: np.ndarray,
+                                      detection_result,
+                                      segmentation_result) -> dict:
         """
         Оценка равномерности распределения ингредиента:
         Ячейка считается заполненной, если один из объектов ингредиента
@@ -46,7 +54,7 @@ class DistributionChecker:
 
         :param mask: бинарная маска начинки (2D NumPy)
         :param boxes: список (x1, y1, x2, y2, class_id)
-        :param min_overlap_ratio: минимальная доля площади ячейки, покрытая одним объектом
+        :param min_overlap_ratio: минимальная доля площади ячейки
         :return: словарь {class_id: score}, где score в [0, 1]
         """
         mask = self.preprocessing_segmentation(segmentation_result, image)

@@ -4,11 +4,12 @@ import numpy as np
 
 from .detectors.ingredient_detector import IngredientDetector
 from .embedder.embedder import PizzaEmbedder
+from .segmentation.crust_segmentation import CrustSegmentation
 from .logic.ingredient_checker import IngredientChecker
 from .logic.crust_checker import CrustChecker
-from .segmentation.crust_segmentation import CrustSegmentation
-from .api.evaluation_to_server import send_evaluation_to_server
 from .logic.distribution_checker import DistributionChecker
+from .logic.filling_center_checker import FillingCenterChecker
+from .api.evaluation_to_server import send_evaluation_to_server
 
 
 class CropProcessor:
@@ -20,6 +21,7 @@ class CropProcessor:
         self.detector = IngredientDetector(model_path=os.getenv("INGREDIENTS_DETECTOR"))
         self.segmentation = CrustSegmentation(model_path=os.getenv("CRUST_SEGMENTATION"))
         self.ingredient_checker = IngredientChecker(self.detector.class_names)
+        self.filling_center_checker = FillingCenterChecker()
         self.crust_checker = CrustChecker()
         self.distribution_checker = DistributionChecker(0.6)
 
@@ -32,9 +34,25 @@ class CropProcessor:
             detection_result=detection_result
             )
         print(ingredient_count)
-        percent_crust = self.crust_checker.get_percentage_crust(crop, segmentation_result)
+        percent_crust = self.crust_checker.get_percentage_crust(
+            crop,
+            segmentation_result
+            )
         print(f"Процент корки: {percent_crust}")
-        distribution = self.distribution_checker.ingredient_distribution_score(crop, detection_result, segmentation_result)
+        distribution = self.distribution_checker.ingredient_distribution_score(
+            crop,
+            detection_result,
+            segmentation_result
+            )
         print(distribution)
-        send_evaluation_to_server(pizza_id, percent_crust, ingredient_count, crop)
+        shift, radius = self.filling_center_checker.compute_center_shift(
+            crop,
+            segmentation_result
+            )
+        print(f"Радиус пиццы: {radius}")
+        print(f"Смещение начинки: {shift}")
+        send_evaluation_to_server(pizza_id,
+                                  percent_crust,
+                                  ingredient_count,
+                                  crop)
         return pizza_id
