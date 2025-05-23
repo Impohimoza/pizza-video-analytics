@@ -12,6 +12,8 @@ def send_evaluation_to_server(
     pizza_id: int,
     crust_percentage: float,
     ingredients: list,
+    shift: float,
+    radius: float,
     photo: np.ndarray
 ):
     def task():
@@ -32,6 +34,8 @@ def send_evaluation_to_server(
             'token': os.getenv("PIZZERIA_TOKEN"),
             'pizza_id': pizza_id,
             'crust_percentage': crust_percentage,
+            'radius': radius,
+            'shift': shift,
             'ingredients': json.dumps(ingredients)
         }
 

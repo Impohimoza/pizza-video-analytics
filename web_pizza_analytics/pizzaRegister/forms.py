@@ -5,7 +5,7 @@ from .models import Pizzas, Ingredients, PizzaEmbeddings
 class PizzaForm(forms.ModelForm):
     class Meta:
         model = Pizzas
-        fields = ['name', 'crust_percentage']
+        fields = ['name', 'pizza_size', 'crust_size']
 
 
 class SinglePizzaImageForm(forms.ModelForm):
@@ -18,5 +18,3 @@ class SinglePizzaImageForm(forms.ModelForm):
 
 class PizzaCompositionForm(forms.Form):
     ingredient = forms.ModelChoiceField(queryset=Ingredients.objects.all(), required=False)
-    quantity = forms.IntegerField(min_value=1, required=False)
-

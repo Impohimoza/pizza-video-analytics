@@ -16,7 +16,7 @@
             <div class="col-md-6 mb-4">
                 <div class="card shadow-sm p-3">
                     <h5>{{ pizza.name }}</h5>
-                    <p>Процент корки: {{ pizza.crust_percentage }}%</p>
+                    <p>Размер пиццы: {{ pizza.pizza_size }} см</p>
                     <div class="d-flex justify-content-between">
                         <a href="{% url 'pizza_detail' pizza.id %}" class="btn btn-primary btn-sm">Посмотреть</a>
                         {% if is_admin %}

@@ -16,7 +16,7 @@
             {% csrf_token %}
 
             <div class="row mb-4 justify-content-center">
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label for="{{ pizza_form.name.id_for_label }}" class="form-label">Название пиццы</label>
                     <input type="text" name="{{ pizza_form.name.name }}" id="{{ pizza_form.name.id_for_label }}"
                         value="{{ pizza_form.name.value|default_if_none:'' }}" 
@@ -26,10 +26,17 @@
                     {% endfor %}
                 </div>
 
-                <div class="col-md-5">
-                    <label for="{{ pizza_form.crust_percentage.id_for_label }}" class="form-label">Процент корки</label>
-                    <input type="number" name="{{ pizza_form.crust_percentage.name }}" id="{{ pizza_form.crust_percentage.id_for_label }}"
-                        value="{{ pizza_form.crust_percentage.value|default_if_none:'' }}" 
+                <div class="col-md-4">
+                    <label for="{{ pizza_form.pizza_size.id_for_label }}" class="form-label">Размер пиццы(см)</label>
+                    <input type="number" name="{{ pizza_form.pizza_size.name }}" id="{{ pizza_form.pizza_size.id_for_label }}"
+                        value="{{ pizza_form.pizza_size.value|default_if_none:'' }}" 
+                        class="form-control" required step="0.01" min="0" max="100">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="{{ pizza_form.crust_size.id_for_label }}" class="form-label">Размер корки(см)</label>
+                    <input type="number" name="{{ pizza_form.crust_size.name }}" id="{{ pizza_form.crust_size.id_for_label }}"
+                        value="{{ pizza_form.crust_size.value|default_if_none:'' }}" 
                         class="form-control" required step="0.01" min="0" max="100">
                 </div>
             </div>
@@ -89,11 +96,6 @@
                             <option value="{{ ing.id }}">{{ ing.name }}</option>
                         {% endfor %}
                     </select>
-                </div>
-    
-                <div class="col-md-4 mb-2">
-                    <label for="id_${ingredientIndex}-quantity">Количество:</label>
-                    <input type="number" name="${ingredientIndex}-quantity" id="id_${ingredientIndex}-quantity" class="form-control" min="1">
                 </div>
     
                 <div class="col-md-2 mb-2">

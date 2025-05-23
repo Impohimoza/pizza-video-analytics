@@ -11,7 +11,8 @@ from pgvector.django import VectorField
 
 class Pizzas(models.Model):
     name = models.TextField(unique=True)
-    crust_percentage = models.FloatField()
+    pizza_size = models.FloatField()
+    crust_size = models.FloatField()
 
     class Meta:
         db_table = 'pizzas'
@@ -25,9 +26,8 @@ class Ingredients(models.Model):
 
 
 class PizzaComposition(models.Model):
-    pizza = models.OneToOneField('Pizzas', models.DO_NOTHING, primary_key=True)  # The composite primary key (pizza_id, ingredient_id) found, that is not supported. The first column is selected.
+    pizza = models.OneToOneField('Pizzas', models.CASCADE, primary_key=True)  # The composite primary key (pizza_id, ingredient_id) found, that is not supported. The first column is selected.
     ingredient = models.ForeignKey(Ingredients, models.DO_NOTHING)
-    quantity = models.IntegerField()
 
     class Meta:
         db_table = 'pizza_composition'

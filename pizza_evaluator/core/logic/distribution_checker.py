@@ -4,8 +4,9 @@ import cv2
 
 class DistributionChecker:
     """Класс для подсчета распределение ингредиентов по начинке"""
-    def __init__(self, min_overlap_ratio=0.3):
+    def __init__(self, class_names: dict, min_overlap_ratio=0.3):
         self.min_overlap_ratio = min_overlap_ratio
+        self.class_names = class_names
 
     def preprocessing_segmentation(self,
                                    segmentation_result,
@@ -119,6 +120,6 @@ class DistributionChecker:
                         filled_cells += 1
                     total_cells += 1
 
-            scores[cls_id] = filled_cells / total_cells if total_cells > 0 else 0.0
+            scores[self.class_names[cls_id]] = 100 * (filled_cells / total_cells) if total_cells > 0 else 0.0
 
         return scores

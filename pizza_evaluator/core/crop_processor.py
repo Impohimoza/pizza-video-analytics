@@ -23,17 +23,16 @@ class CropProcessor:
         self.ingredient_checker = IngredientChecker(self.detector.class_names)
         self.filling_center_checker = FillingCenterChecker()
         self.crust_checker = CrustChecker()
-        self.distribution_checker = DistributionChecker(0.6)
+        self.distribution_checker = DistributionChecker(self.detector.class_names, 0.6)
 
     def process_crop(self, crop: np.ndarray) -> str:
         pizza_id = self.embedder.classify(crop)
         detection_result = self.detector.detect(crop)
         segmentation_result = self.segmentation.detect(crop)
-        ingredient_count = self.ingredient_checker.count_ingredients(
+        ingredient_info = self.ingredient_checker.count_ingredients(
             pizza_id=pizza_id,
             detection_result=detection_result
             )
-        print(ingredient_count)
         percent_crust = self.crust_checker.get_percentage_crust(
             crop,
             segmentation_result
@@ -44,7 +43,9 @@ class CropProcessor:
             detection_result,
             segmentation_result
             )
-        print(distribution)
+        for i in ingredient_info:
+            i['distribution'] = distribution[i['ingredient_name']]
+        print(ingredient_info)
         shift, radius = self.filling_center_checker.compute_center_shift(
             crop,
             segmentation_result
@@ -53,6 +54,8 @@ class CropProcessor:
         print(f"Смещение начинки: {shift}")
         send_evaluation_to_server(pizza_id,
                                   percent_crust,
-                                  ingredient_count,
+                                  ingredient_info,
+                                  shift,
+                                  radius,
                                   crop)
         return pizza_id

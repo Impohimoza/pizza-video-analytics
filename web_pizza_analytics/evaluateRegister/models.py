@@ -19,7 +19,8 @@ class Evaluation(models.Model):
     photo = models.ImageField(upload_to='evaluation_photos/')
     date = models.DateTimeField(auto_now_add=True)
     quality_percentage = models.FloatField()
-    crust_percentage = models.FloatField()  # <--- ДОБАВИЛИ процент корки
+    crust_size = models.FloatField()  # <--- ДОБАВИЛИ процент корки
+    shift = models.FloatField()
 
     def __str__(self):
         return f"{self.pizza.name} - {self.date.strftime('%d.%m.%Y %H:%M')}"
@@ -29,7 +30,7 @@ class IngredientEvaluation(models.Model):
     evaluation = models.ForeignKey(Evaluation, on_delete=models.CASCADE, related_name='ingredient_evaluations')
     ingredient = models.ForeignKey(Ingredients, on_delete=models.CASCADE)  # <--- СВЯЗЫВАЕМ с моделью ингредиентов
     detected_quantity = models.IntegerField()
-    expected_quantity = models.IntegerField()
+    distriubtion = models.FloatField()
 
 
 class Notification(models.Model):

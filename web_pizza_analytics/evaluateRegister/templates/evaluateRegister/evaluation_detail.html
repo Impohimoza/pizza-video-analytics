@@ -21,7 +21,8 @@
             <div class="col-md-6 mb-2">
                 <h5><strong>Дата оценки:</strong> {{ evaluation.date|date:"d.m.Y H:i" }}</h5>
                 <h5><strong>Качество:</strong> {{ evaluation.quality_percentage|floatformat:1 }}%</h5>
-                <h5><strong>Процент корки:</strong> {{ evaluation.crust_percentage|floatformat:1 }}%</h5>
+                <h5><strong>Размер корки(см):</strong> {{ evaluation.crust_size|floatformat:1 }}</h5>
+                <h5><strong>Смешение пиццы(см):</strong> {{ evaluation.shift|floatformat:1 }}</h5>
             </div>
         </div>
 
@@ -34,7 +35,7 @@
                     <tr>
                         <th>Ингредиент</th>
                         <th>Обнаружено</th>
-                        <th>Должно быть</th>
+                        <th>Уровень раскладки</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -42,7 +43,7 @@
                         <tr>
                             <td>{{ ing_eval.ingredient.name }}</td>
                             <td>{{ ing_eval.detected_quantity }}</td>
-                            <td>{{ ing_eval.expected_quantity }}</td>
+                            <td>{{ ing_eval.distriubtion }}%</td>
                         </tr>
                     {% empty %}
                         <tr>

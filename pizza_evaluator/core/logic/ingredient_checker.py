@@ -13,7 +13,7 @@ class IngredientChecker:
         """Функция для получения всех ингредиентов в пицце"""
 
         query = """
-            SELECT ingredients.name, ingredients.id, pizza_composition.quantity
+            SELECT ingredients.name, ingredients.id
             FROM pizza_composition
             JOIN ingredients ON pizza_composition.ingredient_id = ingredients.id
             WHERE pizza_composition.pizza_id = %s
@@ -21,7 +21,7 @@ class IngredientChecker:
         self.cursor.execute(query, (pizza_id,))
         rows = self.cursor.fetchall()
         # {name: (id, count)}
-        return {row[0]: (row[1], row[2]) for row in rows}
+        return {row[0]: (row[1]) for row in rows}
 
     def count_ingredients(self, pizza_id, detection_result):
         """Функция для подсчета количества ингредиентов"""
@@ -38,6 +38,6 @@ class IngredientChecker:
 
         # Преобразуем в {ingredient_id: (detect_count, allowed_count)}
         result = [
-            {"ingredient_id": allowed[i][0], "detected_quantity": counted[i]} for i in counted
+            {"ingredient_name": i, "detected_quantity": counted[i]} for i in counted
             ]
         return result

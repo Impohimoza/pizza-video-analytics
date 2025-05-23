@@ -21,7 +21,7 @@
                             {% endif %}
                         </a>
                     </th>
-                    <th>Процент корки (%)</th>
+                    <th>Размер корки (см)</th>
                     <th>Подробнее</th>
                 </tr>
             </thead>
@@ -32,7 +32,7 @@
                         <td>{{ evaluation.location.address }}</td>
                         <td>{{ evaluation.date|date:"d.m.Y H:i" }}</td>
                         <td>{{ evaluation.quality_percentage|floatformat:1 }}%</td>
-                        <td>{{ evaluation.crust_percentage|floatformat:1 }}%</td>
+                        <td>{{ evaluation.crust_size|floatformat:1 }}</td>
                         <td>
                             <a href="{% url 'evaluation_detail' evaluation.id %}" class="btn btn-sm btn-outline-primary">Открыть</a>
                         </td>

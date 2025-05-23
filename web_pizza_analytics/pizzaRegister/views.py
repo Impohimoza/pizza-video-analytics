@@ -42,9 +42,8 @@ def add_pizza(request):
                     # Сохраняем ингредиенты
                     for cf in composition_forms:
                         ingredient = cf.cleaned_data.get('ingredient')
-                        quantity = cf.cleaned_data.get('quantity')
-                        if ingredient and quantity:
-                            PizzaComposition.objects.create(pizza=pizza, ingredient=ingredient, quantity=quantity)
+                        if ingredient:
+                            PizzaComposition.objects.create(pizza=pizza, ingredient=ingredient)
 
                     # Сохраняем изображения и эмбеддинги
                     feature_extractor = FeatureExtractor()

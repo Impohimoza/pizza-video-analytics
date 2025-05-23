@@ -155,7 +155,7 @@ def evaluation_export(request):
     ws.title = "Оценки пицц"
 
     # Заголовки
-    ws.append(["Пицца", "Адрес", "Дата оценки", "Качество (%)", "Процент корки (%)"])
+    ws.append(["Пицца", "Адрес", "Дата оценки", "Качество (%)", "Размер корки"])
 
     for evaluation in evaluations:
         ws.append([
@@ -163,7 +163,7 @@ def evaluation_export(request):
             evaluation.location.address,
             evaluation.date.strftime("%d.%m.%Y %H:%M"),
             round(evaluation.quality_percentage, 1),
-            round(evaluation.crust_percentage, 1)
+            round(evaluation.crust_size, 1)
         ])
 
     # Отправляем файл пользователю
@@ -184,9 +184,12 @@ def create_evaluation_api(request):
     pizza_id = request.POST.get('pizza_id')
     crust_percentage = request.POST.get('crust_percentage')
     ingredients_json = request.POST.get('ingredients')
+    crust_percentage = request.POST.get('crust_percentage')
+    radius = request.POST.get('radius')
+    shift = request.POST.get('shift')
     photo = request.FILES.get('photo')
 
-    if not all([token, pizza_id, crust_percentage, ingredients_json, photo]):
+    if not all([token, pizza_id, crust_percentage, ingredients_json, radius, shift, photo]):
         return JsonResponse({"error": "Missing required fields"}, status=400)
 
     # Проверка токена
@@ -212,7 +215,10 @@ def create_evaluation_api(request):
         return JsonResponse({"error": "Crust > 100%"}, status=400)
 
     # Получение эталонного процента корки из пиццы
-    expected_crust_percentage = pizza.crust_percentage  # предполагаем, что у модели Pizzas есть поле crust_percentage
+    expected_crust_percentage = 100 * (pizza.pizza_size**2 - (pizza.pizza_size - pizza.crust_size)**2) / (pizza.pizza_size**2) # предполагаем, что у модели Pizzas есть поле crust_percentage
+    pizza_size = pizza.pizza_size
+    shift = float(shift) / ((float(radius) * 2) / pizza_size)
+    crust_size = pizza_size - pizza_size * (1 - (float(crust_percentage) / 100)) ** 0.5
 
     # Сохраняем оценку без качества пока
     evaluation = Evaluation.objects.create(
@@ -220,37 +226,31 @@ def create_evaluation_api(request):
         location=location,
         photo=photo,
         quality_percentage=0.0,  # пересчитаем ниже
-        crust_percentage=float(crust_percentage)
+        crust_size=crust_size,
+        shift=shift
     )
 
     # Сохраняем ингредиенты + собираем данные для расчёта
     ingredient_penalties = []
 
     for ingredient in ingredients_data:
-        ing_id = ingredient.get('ingredient_id')
+        ing_name = ingredient.get('ingredient_name')
         detected_quantity = ingredient.get('detected_quantity')
+        distribution = ingredient.get('distribution')
 
         try:
-            ingredient_obj = Ingredients.objects.get(id=ing_id)
-
-            try:
-                composition = PizzaComposition.objects.get(pizza=pizza, ingredient=ingredient_obj)
-                expected_quantity = composition.quantity
-            except PizzaComposition.DoesNotExist:
-                expected_quantity = 0
+            ingredient_obj = Ingredients.objects.get(name=ing_name)
 
             # Сохраняем ингредиент
             IngredientEvaluation.objects.create(
                 evaluation=evaluation,
                 ingredient=ingredient_obj,
                 detected_quantity=detected_quantity,
-                expected_quantity=expected_quantity
+                distriubtion=float(distribution)
             )
 
             # Расчёт штрафа за ингредиенты
-            if expected_quantity > 0:
-                diff = abs(detected_quantity - expected_quantity) / expected_quantity * 100
-                ingredient_penalties.append(diff)
+            ingredient_penalties.append(float(distribution))
 
         except Ingredients.DoesNotExist:
             continue
@@ -258,19 +258,21 @@ def create_evaluation_api(request):
     # Расчёт оценки
     def calculate_quality(crust_real, crust_expected, penalties):
         crust_penalty = abs(crust_real - crust_expected) * 2
+        print(f"crust_expected: {crust_expected}")
 
         if penalties:
-            avg_ingredient_penalty = sum(penalties) / len(penalties)
+            avg_ingredient_penalty = 100 - sum(penalties) / len(penalties)
         else:
             avg_ingredient_penalty = 0
 
+        print(f"crust_penalty: {avg_ingredient_penalty}")
         total_penalty = crust_penalty + avg_ingredient_penalty
         quality = max(100 - total_penalty, 0)
         return round(quality, 1)
 
     final_quality = calculate_quality(
         crust_real=float(crust_percentage),
-        crust_expected=float(expected_crust_percentage),
+        crust_expected=expected_crust_percentage,
         penalties=ingredient_penalties
     )
     if final_quality < 70.0:
