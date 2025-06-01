@@ -5,11 +5,6 @@
 
 <div class="container py-5">
     <h2 class="mb-4 text-center">Список пицц</h2>
-    {% if is_admin %}
-    <div class="text-end mb-4">
-        <a href="{% url 'add_pizza' %}" class="btn btn-success">Добавить новую пиццу</a>
-    </div>
-    {% endif %}
 
     <div class="row">
         {% for pizza in pizzas %}

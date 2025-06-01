@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Заявки на добавление пицц{% endblock %}
+{% block content %}
+<div class="container py-5">
+    <h2>Новые заявки на добавление пицц</h2>
+    <ul class="list-group mt-4">
+        {% for req in requests %}
+            <li class="list-group-item">
+                <strong>{{ req.name }}</strong> — {{ req.created_at|date:"d.m.Y H:i" }}
+                <br>Ингредиенты: {{ req.ingredients }}
+                <br>Описание: {{ req.description }}
+                <br>
+                <a href="{% url 'add_pizza_from_request' req.id %}" class="btn btn-success btn-sm mt-2">Оформить</a>
+            </li>
+        {% empty %}
+            <li class="list-group-item">Нет необработанных заявок.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

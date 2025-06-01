@@ -9,10 +9,23 @@ from django.db import models
 from pgvector.django import VectorField
 
 
+class PizzaRequest(models.Model):
+    name = models.CharField(max_length=255)
+    ingredients = models.TextField(help_text="JSON строка с ингредиентами")
+    description = models.TextField()
+    is_processed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def ingredients_list(self):
+        return [i.strip() for i in self.ingredients.split('\n') if i.strip()]
+
+
 class Pizzas(models.Model):
     name = models.TextField(unique=True)
     pizza_size = models.FloatField()
     crust_size = models.FloatField()
+    request = models.OneToOneField(PizzaRequest, on_delete=models.SET_NULL, null=True, blank=True)
 
     class Meta:
         db_table = 'pizzas'
@@ -44,3 +57,5 @@ class PizzaEmbeddings(models.Model):
 
     class Meta:
         db_table = 'pizza_embeddings'
+
+

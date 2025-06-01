@@ -110,7 +110,6 @@ def evaluation_export(request):
 
     evaluations = Evaluation.objects.all()
     pizzas = Pizzas.objects.all()
-    locations = PizzeriaLocation.objects.all()
     is_manager = request.user.is_authenticated and hasattr(request.user, 'pizzeria_location') and request.user.pizzeria_location and request.user.groups.filter(name="Менеджеры пиццерий").exists()
     pizza_id = request.GET.get('pizza')
     start_date = request.GET.get('start_date')
@@ -215,7 +214,7 @@ def create_evaluation_api(request):
         return JsonResponse({"error": "Crust > 100%"}, status=400)
 
     # Получение эталонного процента корки из пиццы
-    expected_crust_percentage = 100 * (pizza.pizza_size**2 - (pizza.pizza_size - pizza.crust_size)**2) / (pizza.pizza_size**2) # предполагаем, что у модели Pizzas есть поле crust_percentage
+    expected_crust_percentage = 100 * (pizza.pizza_size**2 - (pizza.pizza_size - pizza.crust_size)**2) / (pizza.pizza_size**2)  # предполагаем, что у модели Pizzas есть поле crust_percentage
     pizza_size = pizza.pizza_size
     shift = float(shift) / ((float(radius) * 2) / pizza_size)
     crust_size = pizza_size - pizza_size * (1 - (float(crust_percentage) / 100)) ** 0.5
@@ -256,9 +255,10 @@ def create_evaluation_api(request):
             continue
 
     # Расчёт оценки
-    def calculate_quality(crust_real, crust_expected, penalties):
+    def calculate_quality(crust_real, crust_expected, penalties, shift, crust_size):
         crust_penalty = abs(crust_real - crust_expected) * 2
-        print(f"crust_expected: {crust_expected}")
+        shift_penalty = 100 * (shift / crust_size)
+        print(f"Смещение: {shift_penalty},   Ошибка корки: {crust_penalty}")
 
         if penalties:
             avg_ingredient_penalty = 100 - sum(penalties) / len(penalties)
@@ -266,14 +266,16 @@ def create_evaluation_api(request):
             avg_ingredient_penalty = 0
 
         print(f"crust_penalty: {avg_ingredient_penalty}")
-        total_penalty = crust_penalty + avg_ingredient_penalty
+        total_penalty = crust_penalty + avg_ingredient_penalty + shift_penalty
         quality = max(100 - total_penalty, 0)
         return round(quality, 1)
 
     final_quality = calculate_quality(
         crust_real=float(crust_percentage),
         crust_expected=expected_crust_percentage,
-        penalties=ingredient_penalties
+        penalties=ingredient_penalties,
+        shift=shift,
+        crust_size=pizza.crust_size
     )
     if final_quality < 70.0:
         # Находим всех менеджеров этой пиццерии
@@ -367,7 +369,6 @@ def check_new_notifications(request):
 def reports_page(request):
     pizzas = Pizzas.objects.all()
     locations = PizzeriaLocation.objects.all()
-    
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     location_id = request.GET.get('location')

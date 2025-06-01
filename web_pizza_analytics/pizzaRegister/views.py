@@ -1,73 +1,76 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.exceptions import PermissionDenied
 from .forms import PizzaForm, SinglePizzaImageForm, PizzaCompositionForm
-from .models import Pizzas, PizzaEmbeddings, PizzaComposition
+from .models import Pizzas, PizzaEmbeddings, PizzaComposition, PizzaRequest
 from .keras_model_loader import FeatureExtractor
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
 
 
-@login_required(login_url='/login/')
-def add_pizza(request):
-    unread_notifications_count = 0
-    if request.user.is_authenticated:
-        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
-    if not request.user.is_superuser and not request.user.groups.filter(name="Администраторы сети").exists():
-        raise PermissionDenied("У вас нет прав на добавление пиццы.")
-    error_message = None
+# @login_required(login_url='/login/')
+# def add_pizza(request):
+#     unread_notifications_count = 0
+#     if request.user.is_authenticated:
+#         unread_notifications_count = request.user.notifications.filter(is_read=False).count()
+#     if not request.user.is_superuser and not request.user.groups.filter(name="Администраторы сети").exists():
+#         raise PermissionDenied("У вас нет прав на добавление пиццы.")
+#     error_message = None
 
-    if request.method == 'POST':
-        pizza_form = PizzaForm(request.POST)
-        image_forms = [SinglePizzaImageForm(request.POST, request.FILES, prefix=str(i)) for i in range(5)]
-        composition_forms = [PizzaCompositionForm(request.POST, prefix=str(i)) for i in range(10)]
+#     if request.method == 'POST':
+#         pizza_form = PizzaForm(request.POST)
+#         image_forms = [SinglePizzaImageForm(request.POST, request.FILES, prefix=str(i)) for i in range(5)]
+#         composition_forms = [PizzaCompositionForm(request.POST, prefix=str(i)) for i in range(10)]
 
-        if pizza_form.is_valid() and all(f.is_valid() for f in image_forms) and all(cf.is_valid() for cf in composition_forms):
-            # Проверка: нет ли уже пиццы с таким названием
-            name = pizza_form.cleaned_data['name']
-            if Pizzas.objects.filter(name__iexact=name).exists():
-                error_message = f"Пицца с названием '{name}' уже существует."
-            else:
-                # Проверка на дубли ингредиентов
-                selected_ingredients = []
-                for cf in composition_forms:
-                    ingredient = cf.cleaned_data.get('ingredient')
-                    if ingredient:
-                        if ingredient.id in selected_ingredients:
-                            error_message = f"Ингредиент '{ingredient.name}' выбран несколько раз."
-                            break
-                        selected_ingredients.append(ingredient.id)
+#         if pizza_form.is_valid() and all(f.is_valid() for f in image_forms) and all(cf.is_valid() for cf in composition_forms):
+#             # Проверка: нет ли уже пиццы с таким названием
+#             name = pizza_form.cleaned_data['name']
+#             if Pizzas.objects.filter(name__iexact=name).exists():
+#                 error_message = f"Пицца с названием '{name}' уже существует."
+#             else:
+#                 # Проверка на дубли ингредиентов
+#                 selected_ingredients = []
+#                 for cf in composition_forms:
+#                     ingredient = cf.cleaned_data.get('ingredient')
+#                     if ingredient:
+#                         if ingredient.id in selected_ingredients:
+#                             error_message = f"Ингредиент '{ingredient.name}' выбран несколько раз."
+#                             break
+#                         selected_ingredients.append(ingredient.id)
 
-                if not error_message:
-                    pizza = pizza_form.save()
+#                 if not error_message:
+#                     pizza = pizza_form.save()
 
-                    # Сохраняем ингредиенты
-                    for cf in composition_forms:
-                        ingredient = cf.cleaned_data.get('ingredient')
-                        if ingredient:
-                            PizzaComposition.objects.create(pizza=pizza, ingredient=ingredient)
+#                     # Сохраняем ингредиенты
+#                     for cf in composition_forms:
+#                         ingredient = cf.cleaned_data.get('ingredient')
+#                         if ingredient:
+#                             PizzaComposition.objects.create(pizza=pizza, ingredient=ingredient)
 
-                    # Сохраняем изображения и эмбеддинги
-                    feature_extractor = FeatureExtractor()
-                    for img_form in image_forms:
-                        if img_form.cleaned_data.get('image'):
-                            pizza_image = PizzaEmbeddings.objects.create(pizza=pizza, image=img_form.cleaned_data['image'])
-                            embedding = feature_extractor.extract(pizza_image.image.path)
-                            pizza_image.vector = embedding
-                            pizza_image.save()
+#                     # Сохраняем изображения и эмбеддинги
+#                     feature_extractor = FeatureExtractor()
+#                     for img_form in image_forms:
+#                         if img_form.cleaned_data.get('image'):
+#                             pizza_image = PizzaEmbeddings.objects.create(pizza=pizza, image=img_form.cleaned_data['image'])
+#                             embedding = feature_extractor.extract(pizza_image.image.path)
+#                             pizza_image.vector = embedding
+#                             pizza_image.save()
 
-                    return redirect('pizza_list')
+#                     return redirect('pizza_list')
 
-    else:
-        pizza_form = PizzaForm()
-        image_forms = [SinglePizzaImageForm(prefix=str(i)) for i in range(5)]
-        composition_forms = [PizzaCompositionForm(prefix=str(i)) for i in range(10)]
+#     else:
+#         pizza_form = PizzaForm()
+#         image_forms = [SinglePizzaImageForm(prefix=str(i)) for i in range(5)]
+#         composition_forms = [PizzaCompositionForm(prefix=str(i)) for i in range(10)]
 
-    return render(request, 'pizzaRegister/pizza_form.html', {
-        'pizza_form': pizza_form,
-        'image_forms': image_forms,
-        'composition_forms': composition_forms,
-        'error_message': error_message,
-        'unread_notifications_count': unread_notifications_count
-    })
+#     return render(request, 'pizzaRegister/pizza_form.html', {
+#         'pizza_form': pizza_form,
+#         'image_forms': image_forms,
+#         'composition_forms': composition_forms,
+#         'error_message': error_message,
+#         'unread_notifications_count': unread_notifications_count
+#     })
 
 
 @login_required(login_url='/login/')
@@ -109,3 +112,94 @@ def delete_pizza(request, pizza_id):
     pizza.delete()
     return redirect('pizza_list')
 
+
+@csrf_exempt
+def create_pizza_request(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            PizzaRequest.objects.create(
+                name=data['name'],
+                ingredients=json.dumps(data['ingredients'], ensure_ascii=False),
+                description=data.get('description', '')
+            )
+            return JsonResponse({'status': 'ok'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+
+@login_required
+def pizza_requests_view(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+    requests = PizzaRequest.objects.filter(is_processed=False).order_by('-created_at')
+    return render(request, 'pizzaRegister/pizza_requests.html', {'requests': requests})
+
+
+@login_required(login_url='/login/')
+def add_pizza_from_request(request, request_id):
+    unread_notifications_count = 0
+    if request.user.is_authenticated:
+        unread_notifications_count = request.user.notifications.filter(is_read=False).count()
+
+    if not request.user.is_superuser and not request.user.groups.filter(name="Администраторы сети").exists():
+        raise PermissionDenied("У вас нет прав на добавление пиццы.")
+
+    pizza_request = get_object_or_404(PizzaRequest, id=request_id, is_processed=False)
+    error_message = None
+
+    if request.method == 'POST':
+        pizza_form = PizzaForm(request.POST)
+        image_forms = [SinglePizzaImageForm(request.POST, request.FILES, prefix=str(i)) for i in range(5)]
+        composition_forms = [PizzaCompositionForm(request.POST, prefix=str(i)) for i in range(10)]
+
+        if pizza_form.is_valid() and all(f.is_valid() for f in image_forms) and all(cf.is_valid() for cf in composition_forms):
+            name = pizza_form.cleaned_data['name']
+            if Pizzas.objects.filter(name__iexact=name).exists():
+                error_message = f"Пицца с названием '{name}' уже существует."
+            else:
+                selected_ingredients = []
+                for cf in composition_forms:
+                    ingredient = cf.cleaned_data.get('ingredient')
+                    if ingredient:
+                        if ingredient.id in selected_ingredients:
+                            error_message = f"Ингредиент '{ingredient.name}' выбран несколько раз."
+                            break
+                        selected_ingredients.append(ingredient.id)
+
+                if not error_message:
+                    pizza = pizza_form.save(commit=False)
+                    pizza.request = pizza_request
+                    pizza.save()
+
+                    for cf in composition_forms:
+                        ingredient = cf.cleaned_data.get('ingredient')
+                        if ingredient:
+                            PizzaComposition.objects.create(pizza=pizza, ingredient=ingredient)
+
+                    feature_extractor = FeatureExtractor()
+                    for img_form in image_forms:
+                        if img_form.cleaned_data.get('image'):
+                            pizza_image = PizzaEmbeddings.objects.create(pizza=pizza, image=img_form.cleaned_data['image'])
+                            embedding = feature_extractor.extract(pizza_image.image.path)
+                            pizza_image.vector = embedding
+                            pizza_image.save()
+
+                    pizza_request.is_processed = True
+                    pizza_request.save()
+                    return redirect('pizza_list')
+
+    else:
+        pizza_form = PizzaForm(initial={'name': pizza_request.name})
+        image_forms = [SinglePizzaImageForm(prefix=str(i)) for i in range(5)]
+        composition_forms = [PizzaCompositionForm(prefix=str(i)) for i in range(10)]
+
+    return render(request, 'pizzaRegister/add_pizza_from_request.html', {
+        'pizza_form': pizza_form,
+        'image_forms': image_forms,
+        'composition_forms': composition_forms,
+        'error_message': error_message,
+        'pizza_request': pizza_request,
+        'unread_notifications_count': unread_notifications_count,
+    })

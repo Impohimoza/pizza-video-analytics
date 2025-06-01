@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% block title %}Добавить пиццу{% endblock %}
+
+{% block content %}
+<div class="card shadow-lg mx-auto" style="max-width: 1000px;">
+    <div class="card-body px-5">
+        <h2 class="mb-4 text-center">Оформление заявки на новую пиццу</h2>
+
+        {% if error_message %}
+            <div class="alert alert-danger text-center">
+                {{ error_message }}
+            </div>
+        {% endif %}
+        <div class="mb-4">
+            <h5><strong>Описание из заявки:</strong></h5>
+            <p>{{ pizza_request.description|linebreaks }}</p>
+
+            <h5><strong>Предложенные ингредиенты:</strong></h5>
+            <ul>
+                {% for ing in pizza_request.ingredients_list %}
+                    <li>{{ ing }}</li>
+                {% empty %}
+                    <li><em>Нет ингредиентов</em></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" id="pizzaForm">
+            {% csrf_token %}
+
+            <div class="row mb-4 justify-content-center">
+                <div class="col-md-4">
+                    <label for="{{ pizza_form.name.id_for_label }}" class="form-label">Название пиццы</label>
+                    <input type="text" name="{{ pizza_form.name.name }}" id="{{ pizza_form.name.id_for_label }}"
+                        value="{{ pizza_form.name.value|default_if_none:'' }}" 
+                        class="form-control {% if pizza_form.name.errors %}is-invalid{% endif %}" required>
+                    {% for error in pizza_form.name.errors %}
+                        <div class="invalid-feedback">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="col-md-4">
+                    <label for="{{ pizza_form.pizza_size.id_for_label }}" class="form-label">Размер пиццы(см)</label>
+                    <input type="number" name="{{ pizza_form.pizza_size.name }}" id="{{ pizza_form.pizza_size.id_for_label }}"
+                        value="{{ pizza_form.pizza_size.value|default_if_none:'' }}" 
+                        class="form-control" required step="0.01" min="0" max="100">
+                </div>
+
+                <div class="col-md-4">
+                    <label for="{{ pizza_form.crust_size.id_for_label }}" class="form-label">Размер корки(см)</label>
+                    <input type="number" name="{{ pizza_form.crust_size.name }}" id="{{ pizza_form.crust_size.id_for_label }}"
+                        value="{{ pizza_form.crust_size.value|default_if_none:'' }}" 
+                        class="form-control" required step="0.01" min="0" max="100">
+                </div>
+            </div>
+
+            <!-- ВЫРАВНИВАЕМ заголовок "Фотографии" -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <h4 class="mt-5 mb-3">Фотографии (5 штук):</h4>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                {% for form in image_forms %}
+                    <div class="col-md-5 mb-3">
+                        {{ form.image.label_tag }} {{ form.image }}
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- ВЫРАВНИВАЕМ заголовок "Ингредиенты" -->
+            <div class="row justify-content-center">
+                <div class="col-md-10">
+                    <h4 class="mt-5 mb-3">Ингредиенты:</h4>
+                </div>
+            </div>
+
+            <div id="ingredientsArea">
+                <!-- сюда добавляются ингредиенты -->
+            </div>
+
+            <div class="text-center">
+                <button type="button" class="btn btn-outline-secondary mb-4" onclick="addIngredient()">Добавить ингредиент</button>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-lg">Сохранить пиццу</button>
+            </div>
+
+            <div class="text-center mt-3">
+                <a href="{% url 'pizza_list' %}" class="btn btn-outline-dark">Назад к списку</a>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    let ingredientIndex = 0;
+    function addIngredient() {
+        const area = document.getElementById('ingredientsArea');
+    
+        const html = `
+        <div class="ingredient-block mb-3" id="ingredient-${ingredientIndex}">
+            <div class="row align-items-end justify-content-center">
+                <div class="col-md-4 mb-2">
+                    <label for="id_${ingredientIndex}-ingredient">Ингредиент:</label>
+                    <select name="${ingredientIndex}-ingredient" id="id_${ingredientIndex}-ingredient" class="form-select">
+                        {% for ing in composition_forms.0.fields.ingredient.queryset %}
+                            <option value="{{ ing.id }}">{{ ing.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+    
+                <div class="col-md-2 mb-2">
+                    <button type="button" class="btn btn-danger w-100" onclick="removeIngredient(${ingredientIndex})">Удалить</button>
+                </div>
+            </div>
+        </div>
+        `;
+        area.insertAdjacentHTML('beforeend', html);
+        ingredientIndex++;
+    }
+    
+    // Удаление блока ингредиента
+    function removeIngredient(index) {
+        const elem = document.getElementById(`ingredient-${index}`);
+        if (elem) {
+            elem.remove();
+        }
+    }
+    </script>
+{% endblock %}

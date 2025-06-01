@@ -30,3 +30,10 @@ CREATE TABLE IF NOT EXISTS pizza_composition (
 --     UNIQUE (pizza_id, image_name)
 -- );
 
+
+
+SELECT pizza_id
+FROM pizza_embeddings
+ORDER BY vector <=> '0.1, 0.2, ..., 0.9' ::vector
+LIMIT 5;
+
