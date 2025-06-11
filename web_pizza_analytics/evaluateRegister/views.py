@@ -214,8 +214,8 @@ def create_evaluation_api(request):
         return JsonResponse({"error": "Crust > 100%"}, status=400)
 
     # Получение эталонного процента корки из пиццы
-    expected_crust_percentage = 100 * (pizza.pizza_size**2 - (pizza.pizza_size - pizza.crust_size)**2) / (pizza.pizza_size**2)  # предполагаем, что у модели Pizzas есть поле crust_percentage
-    pizza_size = pizza.pizza_size
+    pizza_size = pizza.pizza_size / 2
+    expected_crust_percentage = 100 * (pizza_size**2 - (pizza_size - pizza.crust_size)**2) / (pizza_size**2)  # предполагаем, что у модели Pizzas есть поле crust_percentage
     shift = float(shift) / ((float(radius) * 2) / pizza_size)
     crust_size = pizza_size - pizza_size * (1 - (float(crust_percentage) / 100)) ** 0.5
 
@@ -256,7 +256,7 @@ def create_evaluation_api(request):
 
     # Расчёт оценки
     def calculate_quality(crust_real, crust_expected, penalties, shift, crust_size):
-        crust_penalty = abs(crust_real - crust_expected) * 2
+        crust_penalty = abs(crust_real - crust_expected)
         shift_penalty = 100 * (shift / crust_size)
         print(f"Смещение: {shift_penalty},   Ошибка корки: {crust_penalty}")
 
@@ -275,7 +275,7 @@ def create_evaluation_api(request):
         crust_expected=expected_crust_percentage,
         penalties=ingredient_penalties,
         shift=shift,
-        crust_size=pizza.crust_size
+        crust_size=crust_size
     )
     if final_quality < 70.0:
         # Находим всех менеджеров этой пиццерии
@@ -392,7 +392,14 @@ def reports_page(request):
 
     # Процент несоответствий по типам пицц
     non_compliance_by_pizza = evaluations.values('pizza__name').annotate(
-        avg_quality=Avg('quality_percentage')
+        avg_quality=Avg('quality_percentage'),
+        avg_shift=Avg('shift'),
+        avg_crust=Avg('crust_size')
+    )
+    
+    ingredient_stats =  IngredientEvaluation.objects.filter(evaluation__in=evaluations).values('ingredient__name').annotate(
+        avg_quantity=Avg('detected_quantity'),
+        avg_distribution=Avg('distriubtion'),
     )
 
     # Динамика нарушений по дням
@@ -404,7 +411,8 @@ def reports_page(request):
         'pizzas': pizzas,
         'locations': locations,
         'non_compliance_by_pizza': non_compliance_by_pizza,
-        'dynamics': dynamics,
+        'ingredient_stats': ingredient_stats,
+        'dynamics': dynamics
     }
     return render(request, 'evaluateRegister/reports_page.html', context)
 

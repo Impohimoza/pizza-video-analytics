@@ -60,6 +60,8 @@
         <thead class="table-dark">
             <tr>
                 <th>Тип пиццы</th>
+                <th>Среднее смещение (см)</th>
+                <th>Средний размер корки (см)</th>
                 <th>Среднее качество (%)</th>
             </tr>
         </thead>
@@ -67,11 +69,37 @@
             {% for item in non_compliance_by_pizza %}
             <tr>
                 <td>{{ item.pizza__name }}</td>
+                <td>{{ item.avg_shift|floatformat:1 }}</td>
+                <td>{{ item.avg_crust|floatformat:1 }}</td>
                 <td>{{ item.avg_quality|floatformat:1 }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="2" class="text-center">Нет данных для отображения.</td>
+                <td colspan="4" class="text-center">Нет данных для отображения.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4>Процент распределения ингредиентов:</h4>
+    <table class="table table-bordered mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Тип ингредиента</th>
+                <th>Среднее количество</th>
+                <th>Среднее распределение (см)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in ingredient_stats %}
+            <tr>
+                <td>{{ item.ingredient__name }}</td>
+                <td>{{ item.avg_quantity|floatformat:0 }}</td>
+                <td>{{ item.avg_distribution|floatformat:1 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">Нет данных для отображения.</td>
             </tr>
             {% endfor %}
         </tbody>
